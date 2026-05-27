@@ -4,11 +4,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class CareerpathBackendApplication {
+public class CareerPathApplication {
 
 	public static void main(String[] args) {
 
-		SpringApplication.run(CareerpathBackendApplication.class, args);
+		SpringApplication.run(CareerPathApplication.class, args);
 
 	}
 
