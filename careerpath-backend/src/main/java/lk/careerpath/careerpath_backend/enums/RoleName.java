@@ -1,4 +1,11 @@
 package lk.careerpath.careerpath_backend.enums;
 
-public class RoleName {
+public enum RoleName {
+    ROLE_STUDENT,
+    ROLE_PROVIDER,
+    ROLE_UNIVERSITY,
+    ROLE_ADMIN
 }
+
+
+
