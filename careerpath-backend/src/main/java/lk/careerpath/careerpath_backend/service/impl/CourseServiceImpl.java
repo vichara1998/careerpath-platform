@@ -39,4 +39,47 @@ public class CourseServiceImpl {
                 .university(uni).approved(false).build();
         return toResponse(courseRepository.save(course));
     }
+    
+    @Transactional(readOnly = true)
+    public Page<CourseResponse> searchCourses(String keyword, CourseType type, CourseMode mode,
+            String district, BigDecimal minFee, BigDecimal maxFee, String careerField, Pageable pageable) {
+        return courseRepository.searchCourses(keyword, type, mode, district, maxFee, minFee, careerField, pageable)
+                .map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public CourseResponse getCourse(Long id) {
+        return courseRepository.findById(id).map(this::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + id));
+    }
+
+    public CourseResponse approveCourse(Long id) {
+        Course c = courseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + id));
+        c.setApproved(true);
+        return toResponse(courseRepository.save(c));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseResponse> getFeaturedCourses() {
+        return courseRepository.findFeaturedCourses(Pageable.ofSize(6)).stream().map(this::toResponse).toList();
+    }
+
+    private CourseResponse toResponse(Course c) {
+        return CourseResponse.builder()
+                .id(c.getId()).title(c.getTitle()).description(c.getDescription())
+                .type(c.getType()).level(c.getLevel()).mode(c.getMode())
+                .feePerYear(c.getFeePerYear()).totalFee(c.getTotalFee())
+                .eligibility(c.getEligibility()).durationMonths(c.getDurationMonths())
+                .district(c.getDistrict()).province(c.getProvince())
+                .careerFields(c.getCareerFields()).intakeDate(c.getIntakeDate())
+                .applicationDeadline(c.getApplicationDeadline())
+                .applicationLink(c.getApplicationLink()).brochureUrl(c.getBrochureUrl())
+                .thumbnailUrl(c.getThumbnailUrl()).approved(c.getApproved())
+                .averageRating(c.getAverageRating()).reviewCount(c.getReviewCount())
+                .universityId(c.getUniversity().getId()).universityName(c.getUniversity().getName())
+                .universityType(c.getUniversity().getType() != null ? c.getUniversity().getType().name() : null)
+                .createdAt(c.getCreatedAt()).build();
+    }
 }
+
