@@ -6,7 +6,6 @@ import lk.careerpath.careerpath_backend.entity.Recommendation;
 import lk.careerpath.careerpath_backend.entity.User;
 import lk.careerpath.careerpath_backend.enums.CourseMode;
 import lk.careerpath.careerpath_backend.enums.QualificationLevel;
-import lk.careerpath.careerpath_backend.exception.ResourceNotFoundException;
 import lk.careerpath.careerpath_backend.repository.CourseRepository;
 import lk.careerpath.careerpath_backend.repository.RecommendationRepository;
 import lk.careerpath.careerpath_backend.repository.UserRepository;
