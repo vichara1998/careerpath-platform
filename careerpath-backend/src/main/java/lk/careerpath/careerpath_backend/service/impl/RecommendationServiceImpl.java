@@ -17,8 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
-import static lk.careerpath.careerpath_backend.enums.CourseType.POSTGRADUATE;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -96,7 +94,7 @@ public class RecommendationServiceImpl {
                 else
                     fields.addAll(List.of("Arts & Design", "Media Studies", "Tourism", "Psychology"));
             }
-            case GRADUATE, POSTGRADUATE ->
+            case GRADUATE, PROFESSIONAL ->
                 fields.addAll(List.of("Postgraduate", "Professional Certification", "AI/ML", "Cybersecurity"));
             default -> fields.addAll(List.of("Business", "Software Engineering", "Data Science"));
         }
