@@ -33,6 +33,28 @@ public class EmailServiceImpl {
             log.error("Failed to send verification email to {}: {}", to, e.getMessage());
         }
     }
+    @Async
+    public void sendWelcomeEmail(String to, String name) {
+        try {
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setFrom(fromEmail);
+            msg.setTo(to);
+            msg.setSubject("Welcome to CareerPath Sri Lanka!");
+            msg.setText("Hi " + name + ",\n\n"
+                    + "Welcome to CareerPath Sri Lanka!\n\n"
+                    + "Your account has been verified. You can now:\n"
+                    + "  - Explore courses from 50+ universities and institutes\n"
+                    + "  - Get personalised career pathway recommendations\n"
+                    + "  - Apply to courses directly from our platform\n"
+                    + "  - Chat with our AI career guidance assistant\n\n"
+                    + "Get started here:\n"
+                    + frontendUrl + "\n\n"
+                    + "— CareerPath Sri Lanka Team");
+            mailSender.send(msg);
+        } catch (Exception e) {
+            log.error("Failed to send welcome email to {}: {}", to, e.getMessage());
+        }
+    }
 
     @Async
     public void sendPasswordResetEmail(String to, String name, String token) {
