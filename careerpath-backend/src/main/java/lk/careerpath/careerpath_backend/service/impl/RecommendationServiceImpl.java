@@ -6,6 +6,7 @@ import lk.careerpath.careerpath_backend.entity.Recommendation;
 import lk.careerpath.careerpath_backend.entity.User;
 import lk.careerpath.careerpath_backend.enums.CourseMode;
 import lk.careerpath.careerpath_backend.enums.QualificationLevel;
+import lk.careerpath.careerpath_backend.exception.ResourceNotFoundException;
 import lk.careerpath.careerpath_backend.repository.CourseRepository;
 import lk.careerpath.careerpath_backend.repository.RecommendationRepository;
 import lk.careerpath.careerpath_backend.repository.UserRepository;
@@ -15,6 +16,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
+
+import static lk.careerpath.careerpath_backend.enums.CourseType.POSTGRADUATE;
 
 @Service
 @RequiredArgsConstructor
@@ -100,7 +103,7 @@ public class RecommendationServiceImpl {
         return fields.stream().distinct().toList();
     }
 
-    private CourseResponse toSimpleResponse(lk.careerpath.entity.Course c) {
+    private CourseResponse toSimpleResponse(lk.careerpath.careerpath_backend.entity.Course c) {
         return CourseResponse.builder()
                 .id(c.getId()).title(c.getTitle()).type(c.getType()).level(c.getLevel())
                 .mode(c.getMode()).totalFee(c.getTotalFee()).district(c.getDistrict())
