@@ -6,6 +6,7 @@ import lk.careerpath.careerpath_backend.entity.Course;
 import lk.careerpath.careerpath_backend.entity.University;
 import lk.careerpath.careerpath_backend.enums.CourseMode;
 import lk.careerpath.careerpath_backend.enums.CourseType;
+import lk.careerpath.careerpath_backend.exception.ResourceNotFoundException;
 import lk.careerpath.careerpath_backend.repository.CourseRepository;
 import lk.careerpath.careerpath_backend.repository.UniversityRepository;
 import lombok.RequiredArgsConstructor;
