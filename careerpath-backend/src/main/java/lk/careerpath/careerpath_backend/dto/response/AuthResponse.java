@@ -1,16 +1,27 @@
 package lk.careerpath.careerpath_backend.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuthResponse {
-    private String accessToken;
-    private String refreshToken;
-    private String tokenType;
-    private Long userId;
-    private String email;
-    private String fullName;
-    private String role;
+
+    private String  accessToken;
+    private String  refreshToken;
+
+    @Builder.Default
+    private String  tokenType = "Bearer";
+
+    private Long    userId;
+    private String  email;
+    private String  fullName;
+    private String  role;
+
+    // ← this field was missing — causes .message(...) builder error
+    private String  message;
 }
