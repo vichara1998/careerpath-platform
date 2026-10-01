@@ -1,4 +1,5 @@
 package lk.careerpath.careerpath_backend.service.impl;
+
 import lk.careerpath.careerpath_backend.dto.request.LoginRequest;
 import lk.careerpath.careerpath_backend.dto.request.RegisterRequest;
 import lk.careerpath.careerpath_backend.dto.response.AuthResponse;
@@ -9,6 +10,7 @@ import lk.careerpath.careerpath_backend.repository.*;
 import lk.careerpath.careerpath_backend.security.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,41 +19,52 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Service @RequiredArgsConstructor @Slf4j @Transactional
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
 public class AuthServiceImpl {
-    private final UserRepository     userRepo;
-    private final RoleRepository     roleRepo;
-    private final PasswordEncoder    encoder;
-    private final JwtTokenProvider   jwt;
+    private final UserRepository userRepo;
+    private final RoleRepository roleRepo;
+    private final PasswordEncoder encoder;
+    private final JwtTokenProvider jwt;
     private final AuthenticationManager authManager;
-    private final EmailServiceImpl   emailService;
+    private final EmailServiceImpl emailService;
     private final NotificationRepository notifRepo;
+
+    @Value("${app.mail.enabled:false}")
+    private boolean mailEnabled;
 
     public AuthResponse register(RegisterRequest req) {
         if (userRepo.existsByEmail(req.getEmail()))
             throw new BadRequestException("Email already registered: " + req.getEmail());
 
         RoleName roleName = switch (req.getRole().toUpperCase()) {
-            case "PROVIDER"    -> RoleName.ROLE_PROVIDER;
-            case "UNIVERSITY"  -> RoleName.ROLE_UNIVERSITY;
-            default            -> RoleName.ROLE_STUDENT;
+            case "PROVIDER" -> RoleName.ROLE_PROVIDER;
+            case "UNIVERSITY" -> RoleName.ROLE_UNIVERSITY;
+            default -> RoleName.ROLE_STUDENT;
         };
         Role role = roleRepo.findByName(roleName)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found"));
 
-        String token = UUID.randomUUID().toString();
+        String token = mailEnabled ? UUID.randomUUID().toString() : null;
         User user = User.builder()
                 .fullName(req.getFullName()).email(req.getEmail())
                 .passwordHash(encoder.encode(req.getPassword()))
                 .role(role).phone(req.getPhone())
                 .emailVerificationToken(token)
-                .emailVerificationExpiry(LocalDateTime.now().plusHours(24))
-                .emailVerified(false).build();
+                .emailVerificationExpiry(mailEnabled ? LocalDateTime.now().plusHours(24) : null)
+                .emailVerified(!mailEnabled).build();
         userRepo.save(user);
 
-        emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), token);
+        if (mailEnabled) {
+            emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), token);
+        }
         log.info("Registered user: {}", user.getEmail());
-        return AuthResponse.builder().message("Registration successful. Please check your email to verify your account.").build();
+        String message = mailEnabled
+                ? "Registration successful. Please check your email to verify your account."
+                : "Registration successful. You can now sign in.";
+        return AuthResponse.builder().message(message).build();
     }
 
     public AuthResponse login(LoginRequest req) {
