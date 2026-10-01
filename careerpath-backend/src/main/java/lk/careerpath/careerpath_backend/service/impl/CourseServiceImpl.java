@@ -36,15 +36,25 @@ public class CourseServiceImpl {
                 .careerFields(req.getCareerFields()).intakeDate(req.getIntakeDate())
                 .applicationDeadline(req.getApplicationDeadline())
                 .applicationLink(req.getApplicationLink())
-                .university(uni).approved(false).build();
+                .university(uni).approved(false).rejected(false).build();
         return toResponse(courseRepository.save(course));
     }
-    
+
     @Transactional(readOnly = true)
     public Page<CourseResponse> searchCourses(String keyword, CourseType type, CourseMode mode,
             String district, BigDecimal minFee, BigDecimal maxFee, String careerField, Pageable pageable) {
         return courseRepository.searchCourses(keyword, type, mode, district, maxFee, minFee, careerField, pageable)
                 .map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CourseResponse> getPendingCourses(Pageable pageable) {
+        return courseRepository.findPendingCourses(pageable).map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CourseResponse> getAllCourses(Pageable pageable) {
+        return courseRepository.findAll(pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -57,7 +67,22 @@ public class CourseServiceImpl {
         Course c = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + id));
         c.setApproved(true);
+        c.setRejected(false);
         return toResponse(courseRepository.save(c));
+    }
+
+    public CourseResponse rejectCourse(Long id) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + id));
+        course.setApproved(false);
+        course.setRejected(true);
+        return toResponse(courseRepository.save(course));
+    }
+
+    public void deleteCourse(Long id) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + id));
+        courseRepository.delete(course);
     }
 
     @Transactional(readOnly = true)
@@ -75,11 +100,10 @@ public class CourseServiceImpl {
                 .careerFields(c.getCareerFields()).intakeDate(c.getIntakeDate())
                 .applicationDeadline(c.getApplicationDeadline())
                 .applicationLink(c.getApplicationLink()).brochureUrl(c.getBrochureUrl())
-                .thumbnailUrl(c.getThumbnailUrl()).approved(c.getApproved())
+                .thumbnailUrl(c.getThumbnailUrl()).approved(c.getApproved()).rejected(c.getRejected())
                 .averageRating(c.getAverageRating()).reviewCount(c.getReviewCount())
                 .universityId(c.getUniversity().getId()).universityName(c.getUniversity().getName())
                 .universityType(c.getUniversity().getType() != null ? c.getUniversity().getType().name() : null)
                 .createdAt(c.getCreatedAt()).build();
     }
 }
-
