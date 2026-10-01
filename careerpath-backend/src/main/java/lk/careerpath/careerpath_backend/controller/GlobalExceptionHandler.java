@@ -1,6 +1,8 @@
-package lk.careerpath.careerpath_backend.exception;
+package lk.careerpath.careerpath_backend.controller;
 
 import lk.careerpath.careerpath_backend.dto.response.ApiResponse;
+import lk.careerpath.careerpath_backend.exception.BadRequestException;
+import lk.careerpath.careerpath_backend.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
