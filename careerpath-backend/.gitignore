@@ -4,6 +4,13 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Local seed data includes demo account credentials.
+/Path.sql
+
+# Keep machine-specific configuration out of Git.
+application-local.properties
+application-*.local.properties
+
 ### STS ###
 .apt_generated
 .classpath

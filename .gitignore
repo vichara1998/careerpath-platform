@@ -1,0 +1,11 @@
+# Local IDE settings can contain machine-specific paths or credentials.
+.idea/
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
