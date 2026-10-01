@@ -1,48 +1,14 @@
 import { Link } from "react-router-dom";
-import {
-  MapPin,
-  Clock,
-  Star,
-  Bookmark,
-  BookmarkCheck,
-  ExternalLink,
-} from "lucide-react";
+import { MapPin, Clock, Star, ExternalLink } from "lucide-react";
 import {
   formatCurrency,
   getCourseTypeBadge,
   getModeBadge,
 } from "../../utils/helpers.js";
-import { useState } from "react";
-import { courseApi } from "../../api/courseApi.js";
-import { useAuth } from "../../hooks/useAuth.js";
-import toast from "react-hot-toast";
 
 export default function CourseCard({ course }) {
-  const { isAuthenticated } = useAuth();
-  const [saved, setSaved] = useState(false);
   const typeBadge = getCourseTypeBadge(course.type);
   const modeBadge = getModeBadge(course.mode);
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    if (!isAuthenticated) {
-      toast.error("Login to save courses");
-      return;
-    }
-    try {
-      if (saved) {
-        await courseApi.unsaveCourse(course.id);
-        setSaved(false);
-        toast.success("Removed from saved");
-      } else {
-        await courseApi.saveCourse(course.id);
-        setSaved(true);
-        toast.success("Course saved!");
-      }
-    } catch {
-      toast.error("Something went wrong");
-    }
-  };
 
   return (
     <Link
@@ -60,16 +26,6 @@ export default function CourseCard({ course }) {
             {course.title}
           </h3>
         </div>
-        <button
-          onClick={handleSave}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-brand hover:bg-brand/10 transition-all shrink-0"
-        >
-          {saved ? (
-            <BookmarkCheck className="w-4 h-4 text-brand" />
-          ) : (
-            <Bookmark className="w-4 h-4" />
-          )}
-        </button>
       </div>
 
       {/* University */}
