@@ -4,8 +4,9 @@ import { Provider } from "react-redux";
 import { store } from "./store/store.js";
 import App from "./App.jsx";
 import "./index.css";
+import "./App.css";
 
-      // Apply saved dark mode on load
+// Apply saved dark mode on load
 const theme = localStorage.getItem("theme");
 if (
   theme === "dark" ||
