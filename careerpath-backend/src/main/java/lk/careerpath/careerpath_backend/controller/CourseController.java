@@ -53,6 +53,26 @@ public class CourseController {
         return ResponseEntity.ok(ApiResponse.success(courseService.getFeaturedCourses(), "Featured courses"));
     }
 
+    @GetMapping("/admin/courses/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Page<CourseResponse>>> getPendingCourses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(ApiResponse.success(
+                courseService.getPendingCourses(PageRequest.of(page, size, Sort.by("createdAt").descending())),
+                "Pending courses fetched"));
+    }
+
+    @GetMapping("/admin/courses")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Page<CourseResponse>>> getAllCourses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return ResponseEntity.ok(ApiResponse.success(
+                courseService.getAllCourses(PageRequest.of(page, size, Sort.by("createdAt").descending())),
+                "All courses fetched"));
+    }
+
     @PostMapping("/provider/courses")
     @PreAuthorize("hasAnyRole('PROVIDER','UNIVERSITY','ADMIN')")
     @Operation(summary = "Create a new course (requires PROVIDER role)")
@@ -65,5 +85,18 @@ public class CourseController {
     @Operation(summary = "Approve a course (Admin only)")
     public ResponseEntity<ApiResponse<CourseResponse>> approve(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(courseService.approveCourse(id), "Course approved"));
+    }
+
+    @PatchMapping("/admin/courses/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<CourseResponse>> reject(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(courseService.rejectCourse(id), "Course rejected"));
+    }
+
+    @DeleteMapping("/admin/courses/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+        courseService.deleteCourse(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Course deleted"));
     }
 }
