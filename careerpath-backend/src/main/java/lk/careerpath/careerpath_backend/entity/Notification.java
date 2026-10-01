@@ -6,11 +6,17 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-@Entity @Table(name = "notifications")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Entity
+@Table(name = "notifications")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Notification {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -23,6 +29,7 @@ public class Notification {
     private String message;
 
     @Builder.Default
+    @Column(name = "is_read")
     private Boolean read = false;
 
     private String link;
@@ -30,3 +37,4 @@ public class Notification {
     @CreationTimestamp
     private LocalDateTime createdAt;
 }
+
