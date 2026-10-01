@@ -19,6 +19,9 @@ public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecif
 
     Page<Course> findByApprovedTrue(Pageable pageable);
 
+    @Query("SELECT c FROM Course c WHERE c.approved = false AND (c.rejected = false OR c.rejected IS NULL)")
+    Page<Course> findPendingCourses(Pageable pageable);
+
     @Query("SELECT c FROM Course c WHERE c.approved = true AND (:keyword IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%',:keyword,'%'))) AND (:type IS NULL OR c.type = :type) AND (:mode IS NULL OR c.mode = :mode) AND (:district IS NULL OR c.district = :district) AND (:maxFee IS NULL OR c.totalFee <= :maxFee) AND (:minFee IS NULL OR c.totalFee >= :minFee) AND (:careerField IS NULL OR c.careerFields LIKE CONCAT('%',:careerField,'%'))")
     Page<Course> searchCourses(
             @Param("keyword") String keyword,
@@ -28,8 +31,7 @@ public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecif
             @Param("maxFee") BigDecimal maxFee,
             @Param("minFee") BigDecimal minFee,
             @Param("careerField") String careerField,
-            Pageable pageable
-    );
+            Pageable pageable);
 
     @Query("SELECT c FROM Course c WHERE c.approved = true AND c.featured = true ORDER BY c.createdAt DESC")
     List<Course> findFeaturedCourses(Pageable pageable);
