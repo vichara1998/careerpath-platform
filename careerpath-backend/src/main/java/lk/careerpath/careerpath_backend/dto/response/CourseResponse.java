@@ -30,6 +30,7 @@ public class CourseResponse {
     private String brochureUrl;
     private String thumbnailUrl;
     private Boolean approved;
+    private Boolean rejected;
     private Double averageRating;
     private Integer reviewCount;
     private Long universityId;
