@@ -6,6 +6,7 @@ target/
 
 # Local seed data includes demo account credentials.
 /Path.sql
+/uploads/
 
 # Keep machine-specific configuration out of Git.
 application-local.properties
