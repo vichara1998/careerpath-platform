@@ -54,6 +54,15 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
     },
+    updateUserProfile: (state, action) => {
+      if (!state.user) return;
+      state.user = {
+        ...state.user,
+        ...action.payload,
+        userId: state.user.userId ?? action.payload.id,
+      };
+      localStorage.setItem("cp_user", JSON.stringify(state.user));
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -86,6 +95,11 @@ const authSlice = createSlice({
       });
   },
 });
-export const { logout, clearError, clearRegistered, setCredentials } =
-  authSlice.actions;
+export const {
+  logout,
+  clearError,
+  clearRegistered,
+  setCredentials,
+  updateUserProfile,
+} = authSlice.actions;
 export default authSlice.reducer;

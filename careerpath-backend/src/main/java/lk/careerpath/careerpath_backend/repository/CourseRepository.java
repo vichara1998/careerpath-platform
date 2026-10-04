@@ -19,6 +19,10 @@ public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecif
 
     Page<Course> findByApprovedTrue(Pageable pageable);
 
+    Page<Course> findByCreatedByUserId(Long userId, Pageable pageable);
+
+    java.util.Optional<Course> findByIdAndCreatedByUserId(Long id, Long userId);
+
     @Query("SELECT c FROM Course c WHERE c.approved = false AND (c.rejected = false OR c.rejected IS NULL)")
     Page<Course> findPendingCourses(Pageable pageable);
 

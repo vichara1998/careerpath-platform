@@ -12,6 +12,7 @@ import {
   Moon,
   ShieldCheck,
   Sun,
+  UserRound,
   X,
 } from "lucide-react";
 
@@ -33,6 +34,10 @@ export default function Navbar() {
   const navLinks = [
     { to: "/courses", label: "Courses" },
     { to: "/recommendation", label: "Career guide" },
+    ...(isAuthenticated &&
+    ["ROLE_PROVIDER", "ROLE_UNIVERSITY", "ROLE_ADMIN"].includes(user?.role)
+      ? [{ to: "/provider/courses", label: "Submit a course" }]
+      : []),
     ...(isAuthenticated && user?.role === "ROLE_ADMIN"
       ? [{ to: "/admin", label: "Admin desk", icon: ShieldCheck }]
       : []),
@@ -79,9 +84,27 @@ export default function Navbar() {
             </button>
             {isAuthenticated ? (
               <>
-                <span className="hidden sm:block text-sm text-gray-700">
-                  {user?.fullName?.split(" ")[0]}
-                </span>
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 rounded-full text-sm text-gray-700 hover:text-brand dark:text-gray-200 dark:hover:text-brand-light"
+                  aria-label="Open your profile"
+                  title="Your profile"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+                    {user?.profileImageUrl ? (
+                      <img
+                        className="h-full w-full object-cover"
+                        src={user.profileImageUrl}
+                        alt=""
+                      />
+                    ) : (
+                      <UserRound size={17} aria-hidden="true" />
+                    )}
+                  </span>
+                  <span className="hidden sm:block">
+                    {user?.fullName?.split(" ")[0]}
+                  </span>
+                </Link>
                 <button
                   onClick={() => setLogoutOpen(true)}
                   className="nav-signout"

@@ -10,6 +10,7 @@ import java.time.LocalDate;
 @Data
 public class CourseCreateRequest {
     @NotBlank
+    @Size(max = 200)
     private String title;
     private String description;
     @NotNull
@@ -27,6 +28,9 @@ public class CourseCreateRequest {
     private LocalDate intakeDate;
     private LocalDate applicationDeadline;
     private String applicationLink;
+    @Size(max = 500)
+    @Pattern(regexp = "^(https?://[^\\s]+|/uploads/[0-9a-fA-F-]{36}\\.png)?$")
+    private String thumbnailUrl;
     @NotNull
     private Long universityId;
 }

@@ -30,6 +30,9 @@ public class Course {
     @JoinColumn(name = "university_id", nullable = false)
     private University university;
 
+    @Column(name = "created_by_user_id")
+    private Long createdByUserId;
+
     @Column(nullable = false, length = 200)
     private String title;
 
@@ -63,6 +66,7 @@ public class Course {
     private String province;
 
     private String brochureUrl;
+    @Column(length = 500)
     private String thumbnailUrl;
     private String applicationLink;
 

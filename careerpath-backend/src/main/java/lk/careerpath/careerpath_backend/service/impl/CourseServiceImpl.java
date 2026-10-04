@@ -6,6 +6,7 @@ import lk.careerpath.careerpath_backend.entity.Course;
 import lk.careerpath.careerpath_backend.entity.University;
 import lk.careerpath.careerpath_backend.enums.CourseMode;
 import lk.careerpath.careerpath_backend.enums.CourseType;
+import lk.careerpath.careerpath_backend.exception.BadRequestException;
 import lk.careerpath.careerpath_backend.exception.ResourceNotFoundException;
 import lk.careerpath.careerpath_backend.repository.CourseRepository;
 import lk.careerpath.careerpath_backend.repository.UniversityRepository;
@@ -24,20 +25,61 @@ public class CourseServiceImpl {
     private final CourseRepository courseRepository;
     private final UniversityRepository universityRepository;
 
-    public CourseResponse createCourse(CourseCreateRequest req) {
-        University uni = universityRepository.findById(req.getUniversityId())
-                .orElseThrow(() -> new ResourceNotFoundException("University not found: " + req.getUniversityId()));
-        Course course = Course.builder()
-                .title(req.getTitle()).description(req.getDescription())
-                .type(req.getType()).level(req.getLevel()).mode(req.getMode())
-                .feePerYear(req.getFeePerYear()).totalFee(req.getTotalFee())
-                .eligibility(req.getEligibility()).durationMonths(req.getDurationMonths())
-                .district(req.getDistrict()).province(req.getProvince())
-                .careerFields(req.getCareerFields()).intakeDate(req.getIntakeDate())
-                .applicationDeadline(req.getApplicationDeadline())
-                .applicationLink(req.getApplicationLink())
-                .university(uni).approved(false).rejected(false).build();
+    public CourseResponse createCourse(CourseCreateRequest req, Long creatorId) {
+        Course course = new Course();
+        applyCourseRequest(course, req);
+        course.setCreatedByUserId(creatorId);
+        course.setApproved(false);
+        course.setRejected(false);
         return toResponse(courseRepository.save(course));
+    }
+
+    public CourseResponse updateCourse(Long id, CourseCreateRequest req) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + id));
+        applyCourseRequest(course, req);
+        return toResponse(courseRepository.save(course));
+    }
+
+    public CourseResponse updateMyCourse(Long id, Long creatorId, CourseCreateRequest req) {
+        Course course = courseRepository.findByIdAndCreatedByUserId(id, creatorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
+        if (!course.getUniversity().getId().equals(req.getUniversityId())) {
+            throw new BadRequestException("Only an administrator can change a course's university");
+        }
+        applyCourseRequest(course, req);
+        course.setApproved(false);
+        course.setRejected(false);
+        course.setFeatured(false);
+        return toResponse(courseRepository.save(course));
+    }
+
+    private void applyCourseRequest(Course course, CourseCreateRequest request) {
+        University university = universityRepository.findById(request.getUniversityId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "University not found: " + request.getUniversityId()));
+        course.setTitle(request.getTitle().trim());
+        course.setDescription(request.getDescription());
+        course.setType(request.getType());
+        course.setLevel(request.getLevel());
+        course.setMode(request.getMode());
+        course.setFeePerYear(request.getFeePerYear());
+        course.setTotalFee(request.getTotalFee());
+        course.setEligibility(request.getEligibility());
+        course.setDurationMonths(request.getDurationMonths());
+        course.setDistrict(request.getDistrict());
+        course.setProvince(request.getProvince());
+        course.setCareerFields(request.getCareerFields());
+        course.setIntakeDate(request.getIntakeDate());
+        course.setApplicationDeadline(request.getApplicationDeadline());
+        course.setApplicationLink(request.getApplicationLink());
+        course.setThumbnailUrl(request.getThumbnailUrl());
+        course.setUniversity(university);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CourseResponse> getCoursesCreatedBy(Long userId, Pageable pageable) {
+        return courseRepository.findByCreatedByUserId(userId, pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)

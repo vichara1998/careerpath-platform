@@ -8,12 +8,17 @@ import lk.careerpath.careerpath_backend.dto.response.ApiResponse;
 import lk.careerpath.careerpath_backend.dto.response.CourseResponse;
 import lk.careerpath.careerpath_backend.enums.CourseMode;
 import lk.careerpath.careerpath_backend.enums.CourseType;
+import lk.careerpath.careerpath_backend.service.ProfileImageStorageService;
 import lk.careerpath.careerpath_backend.service.impl.CourseServiceImpl;
+import lk.careerpath.careerpath_backend.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -23,6 +28,7 @@ import java.util.List;
 @Tag(name = "Courses", description = "Course management endpoints")
 public class CourseController {
     private final CourseServiceImpl courseService;
+    private final ProfileImageStorageService imageStorage;
 
     @GetMapping("/courses/public/search")
     @Operation(summary = "Search courses with filters")
@@ -76,8 +82,47 @@ public class CourseController {
     @PostMapping("/provider/courses")
     @PreAuthorize("hasAnyRole('PROVIDER','UNIVERSITY','ADMIN')")
     @Operation(summary = "Create a new course (requires PROVIDER role)")
-    public ResponseEntity<ApiResponse<CourseResponse>> create(@Valid @RequestBody CourseCreateRequest req) {
-        return ResponseEntity.ok(ApiResponse.success(courseService.createCourse(req), "Course submitted for approval"));
+    public ResponseEntity<ApiResponse<CourseResponse>> create(
+            @Valid @RequestBody CourseCreateRequest req,
+            @AuthenticationPrincipal UserDetailsImpl principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                courseService.createCourse(req, principal.getId()), "Course submitted for approval"));
+    }
+
+    @PutMapping("/admin/courses/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<CourseResponse>> updateCourse(
+            @PathVariable Long id, @Valid @RequestBody CourseCreateRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                courseService.updateCourse(id, request), "Course updated"));
+    }
+
+    @PutMapping("/provider/courses/{id}")
+    @PreAuthorize("hasAnyRole('PROVIDER','UNIVERSITY')")
+    public ResponseEntity<ApiResponse<CourseResponse>> updateMyCourse(
+            @PathVariable Long id,
+            @Valid @RequestBody CourseCreateRequest request,
+            @AuthenticationPrincipal UserDetailsImpl principal) {
+        return ResponseEntity.ok(ApiResponse.success(
+                courseService.updateMyCourse(id, principal.getId(), request),
+                "Course updated and submitted for approval"));
+    }
+
+    @GetMapping("/provider/courses")
+    @PreAuthorize("hasAnyRole('PROVIDER','UNIVERSITY','ADMIN')")
+    public ResponseEntity<ApiResponse<Page<CourseResponse>>> getMyCourses(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return ResponseEntity.ok(ApiResponse.success(
+                courseService.getCoursesCreatedBy(principal.getId(), PageRequest.of(page, size)),
+                "Your courses fetched"));
+    }
+
+    @PostMapping(value = "/provider/courses/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('PROVIDER','UNIVERSITY','ADMIN')")
+    public ResponseEntity<ApiResponse<String>> uploadCourseImage(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(ApiResponse.success(imageStorage.store(file), "Course image uploaded"));
     }
 
     @PatchMapping("/admin/courses/{id}/approve")

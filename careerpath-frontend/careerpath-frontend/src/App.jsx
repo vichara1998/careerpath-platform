@@ -14,10 +14,14 @@ import Navbar from "./components/common/Navbar.jsx";
 import Footer from "./components/common/Footer.jsx";
 import ProtectedRoute from "./components/common/ProtectedRoute.jsx";
 import CourseCard from "./components/courses/CourseCard.jsx";
+import CourseImageField from "./components/courses/CourseImageField.jsx";
+import CourseEditModal from "./components/courses/CourseEditModal.jsx";
+import ProviderCourseSubmission from "./components/courses/ProviderCourseSubmission.jsx";
 import { courseApi } from "./api/courseApi.js";
 import { recommendApi } from "./api/recommendApi.js";
 import { authApi } from "./api/authApi.js";
 import { adminApi } from "./api/adminApi.js";
+import Profile from "./components/profile/Profile.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import { login, register } from "./store/slices/authSlice.js";
 import { ArrowRight, Search, ShieldAlert, Sparkles } from "lucide-react";
@@ -53,7 +57,7 @@ function Home() {
   }, [retryCount]);
 
   return (
-    <div>
+    <div className="home-page">
       <section className="home-hero">
         <div className="page-container home-hero-inner">
           <div className="max-w-2xl">
@@ -315,6 +319,7 @@ function AdminDesk() {
     district: "Colombo",
     province: "Western",
     careerFields: "",
+    thumbnailUrl: "",
     universityId: "",
   });
   const [createdCourse, setCreatedCourse] = useState(null);
@@ -326,6 +331,7 @@ function AdminDesk() {
   const [allCourses, setAllCourses] = useState([]);
   const [recordsError, setRecordsError] = useState("");
   const [confirmAction, setConfirmAction] = useState(null);
+  const [editCourse, setEditCourse] = useState(null);
 
   const loadPendingCourses = () => {
     adminApi
@@ -394,6 +400,22 @@ function AdminDesk() {
       .finally(() => setConfirmAction(null));
   };
 
+  const saveCourse = async (courseId, payload) => {
+    setRecordsError("");
+    const { data } = await adminApi.updateCourse(courseId, payload);
+    setAllCourses((current) =>
+      current.map((course) =>
+        course.id === data.data.id ? data.data : course,
+      ),
+    );
+    setPendingCourses((current) =>
+      current.map((course) =>
+        course.id === data.data.id ? data.data : course,
+      ),
+    );
+    return data.data;
+  };
+
   const update = (key, value) =>
     setForm((current) => ({ ...current, [key]: value }));
 
@@ -413,7 +435,12 @@ function AdminDesk() {
       };
       const { data } = await courseApi.create(payload);
       setCreatedCourse(data.data);
-      setForm((current) => ({ ...current, title: "", description: "" }));
+      setForm((current) => ({
+        ...current,
+        title: "",
+        description: "",
+        thumbnailUrl: "",
+      }));
       loadPendingCourses();
     } catch (requestError) {
       setError(apiError(requestError));
@@ -459,6 +486,10 @@ function AdminDesk() {
               rows="4"
             />
           </label>
+          <CourseImageField
+            value={form.thumbnailUrl}
+            onChange={(value) => update("thumbnailUrl", value)}
+          />
           <div className="form-two">
             <label className="field-label">
               University ID
@@ -654,7 +685,10 @@ function AdminDesk() {
             <span>Published and pending catalogue entries</span>
           </div>
           {allCourses.map((course) => (
-            <div className="admin-table-row" key={course.id}>
+            <div
+              className="admin-table-row admin-course-record"
+              key={course.id}
+            >
               <div>
                 <strong>{course.title}</strong>
                 <span>
@@ -670,16 +704,36 @@ function AdminDesk() {
                     ? "Rejected"
                     : "Pending"}
               </span>
-              <button
-                className="danger-button"
-                onClick={() => deleteCourse(course)}
-              >
-                Delete course
-              </button>
+              <div className="admin-course-actions">
+                <button
+                  className="button-outline"
+                  onClick={() => {
+                    setRecordsError("");
+                    setEditCourse(course);
+                  }}
+                  type="button"
+                >
+                  Edit course
+                </button>
+                <button
+                  className="danger-button"
+                  onClick={() => deleteCourse(course)}
+                  type="button"
+                >
+                  Delete course
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </section>
+      {editCourse && (
+        <CourseEditModal
+          course={editCourse}
+          onClose={() => setEditCourse(null)}
+          onSave={saveCourse}
+        />
+      )}
       {confirmAction && (
         <div
           className="dialog-backdrop"
@@ -1391,10 +1445,28 @@ function App() {
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:id" element={<CourseDetails />} />
             <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin"
               element={
                 <ProtectedRoute roles={["ROLE_ADMIN"]}>
                   <AdminDesk />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/provider/courses"
+              element={
+                <ProtectedRoute
+                  roles={["ROLE_PROVIDER", "ROLE_UNIVERSITY", "ROLE_ADMIN"]}
+                >
+                  <ProviderCourseSubmission />
                 </ProtectedRoute>
               }
             />
