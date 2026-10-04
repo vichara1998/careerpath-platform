@@ -9,3 +9,9 @@
 *.key
 *.p12
 *.pfx
+
+# Uploaded user content
+/uploads/
+
+# screenshots
+/portfolio-screenshots/
