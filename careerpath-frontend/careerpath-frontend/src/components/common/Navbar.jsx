@@ -44,16 +44,16 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur border-b border-gray-100 dark:border-gray-800 shadow-sm">
-      <div className="page-container">
-        <div className="flex items-center justify-between h-16">
+    <nav className="dashboard-nav sticky top-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur border-b border-gray-100 dark:border-gray-800 shadow-sm">
+      <div className="page-container dashboard-nav-inner">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0">
             <div className="w-8 h-8 rounded-md brand-symbol flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-gray-900 dark:text-white text-lg hidden sm:block">
-              CareerPath <span className="text-brand">SL</span>
+              CareerPath <span className="text-brand dark:text-[#f2c65d]">SL</span>
             </span>
           </Link>
 
@@ -63,7 +63,7 @@ export default function Navbar() {
               <Link
                 key={l.to}
                 to={l.to}
-                className={`nav-link px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ${location.pathname.startsWith(l.to) ? "text-brand bg-brand/5" : ""}`}
+                className={`dashboard-nav-link ${location.pathname.startsWith(l.to) ? "active" : ""}`}
               >
                 {l.label}
               </Link>
@@ -73,7 +73,7 @@ export default function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-2">
             <button
-              className="theme-toggle"
+              className="dashboard-theme-toggle text-gray-600 dark:text-white/80"
               onClick={() => dispatch(toggleDarkMode())}
               aria-label={
                 darkMode ? "Switch to light mode" : "Switch to dark mode"
@@ -86,11 +86,11 @@ export default function Navbar() {
               <>
                 <Link
                   to="/profile"
-                  className="flex items-center gap-2 rounded-full text-sm text-gray-700 hover:text-brand dark:text-gray-200 dark:hover:text-brand-light"
+                  className="dashboard-user-pill text-gray-700 dark:text-white/90"
                   aria-label="Open your profile"
                   title="Your profile"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+                  <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/8">
                     {user?.profileImageUrl ? (
                       <img
                         className="h-full w-full object-cover"
@@ -107,7 +107,7 @@ export default function Navbar() {
                 </Link>
                 <button
                   onClick={() => setLogoutOpen(true)}
-                  className="nav-signout"
+                  className="dashboard-signout text-gray-600 dark:text-white/80"
                   aria-label="Sign out"
                   title="Sign out"
                 >
@@ -116,17 +116,18 @@ export default function Navbar() {
               </>
             ) : (
               <div className="flex items-center gap-2">
-                <Link to="/login" className="btn-ghost text-sm">
+                <Link to="/login" className="dashboard-login-link text-gray-700 dark:text-white/90">
                   Login
                 </Link>
-                <Link to="/register" className="nav-join">
-                  Join <ArrowRight size={15} />
+                <Link to="/register" className="dashboard-join bg-brand text-white dark:bg-[#0f766e] dark:text-white">
+                  <span>System</span>
+                  <ArrowRight size={15} />
                 </Link>
               </div>
             )}
 
             <button
-              className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="md:hidden p-2 rounded-lg text-white/70 hover:bg-white/5"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? (
