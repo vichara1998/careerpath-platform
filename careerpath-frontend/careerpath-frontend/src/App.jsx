@@ -37,98 +37,149 @@ const apiError = (error) =>
     : "Something went wrong. Please try again.");
 
 function Home() {
-  const [featured, setFeatured] = useState([]);
-  const [error, setError] = useState("");
-  const [retryCount, setRetryCount] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    courseApi
-      .getFeatured()
-      .then(({ data }) => {
-        if (active) setFeatured(data.data || []);
-      })
-      .catch((requestError) => {
-        if (active) setError(apiError(requestError));
-      });
-    return () => {
-      active = false;
-    };
-  }, [retryCount]);
-
   return (
-    <div className="home-page">
-      <section className="home-hero">
-        <div className="page-container home-hero-inner">
-          <div className="max-w-2xl">
-            <p className="eyebrow">
-              <span className="eyebrow-mark" /> EDUCATION PATHWAYS IN SRI LANKA
-            </p>
-            <h1>
-              Build a future that fits <em>you.</em>
-            </h1>
-            <p className="hero-copy">
-              Explore real courses, compare study options, and get a practical
-              pathway shaped around your qualifications and goals.
-            </p>
-            <div className="hero-actions">
-              <Link to="/courses" className="button-primary">
-                Explore courses <ArrowRight size={17} />
-              </Link>
-              <Link to="/recommendation" className="button-light">
-                <Sparkles size={16} /> Find my pathway
-              </Link>
-            </div>
-            <div className="hero-note">
-              <span className="hero-note-line" /> From your next step to your
-              next chapter.
-            </div>
-          </div>
-          <div className="hero-stamp" aria-hidden="true">
-            <span>YOUR</span>
-            <strong>
-              NEXT
-              <br />
-              STEP
-            </strong>
-            <span>STARTS HERE</span>
-            <div className="stamp-arrow">↗</div>
-          </div>
-        </div>
-      </section>
+    <div className="guided-dashboard">
+      <div className="dashboard-scene" aria-hidden="true">
+        <span className="scene-ring ring-one" />
+        <span className="scene-ring ring-two" />
+        <span className="scene-ring ring-three" />
+      </div>
 
-      <section className="page-container content-section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">A GOOD PLACE TO START</p>
-            <h2>Featured courses</h2>
-          </div>
-          <Link to="/courses" className="text-link">
-            Browse all courses <ArrowRight size={16} />
-          </Link>
+      <div className="page-container dashboard-shell">
+        <div className="hero-headline-wrap">
+          <p className="eyebrow eyebrow-gold">
+            <span className="eyebrow-mark" /> Education pathways in Sri Lanka
+          </p>
+          <h1>
+            Make your next move
+            <span>clearer.</span>
+          </h1>
+          <p className="hero-copy">
+            Share your background and interests to get a pathway and relevant
+            courses.
+          </p>
         </div>
-        {error ? (
-          <div className="notice notice-error">
-            <span>{error}</span>
-            <button
-              type="button"
-              onClick={() => setRetryCount((count) => count + 1)}
-            >
-              Try again
+
+        <div className="dashboard-panel">
+          <div className="profile-panel">
+            <h2>Your profile</h2>
+
+            <label className="field-wrap">
+              <span>Highest qualification</span>
+              <div className="select-shell">
+                <select defaultValue="">
+                  <option value="" disabled>
+                    Choose a level
+                  </option>
+                  <option>Secondary education</option>
+                  <option>Diploma</option>
+                  <option>Undergraduate</option>
+                  <option>Postgraduate</option>
+                </select>
+              </div>
+            </label>
+
+            <label className="field-wrap">
+              <span>Study stream</span>
+              <div className="input-shell">
+                <input
+                  type="text"
+                  defaultValue="Science, Commerce, Arts, Maths..."
+                />
+              </div>
+            </label>
+
+            <label className="field-wrap">
+              <span>Interests</span>
+              <div className="input-shell">
+                <input
+                  type="text"
+                  defaultValue="Software engineering, design"
+                />
+              </div>
+            </label>
+
+            <label className="field-wrap">
+              <span>Skills</span>
+              <div className="input-shell">
+                <input
+                  type="text"
+                  defaultValue="Problem solving, communication"
+                />
+              </div>
+            </label>
+
+            <label className="field-wrap">
+              <span>Career goal</span>
+              <div className="input-shell">
+                <input type="text" placeholder="What would you like to do?" />
+              </div>
+            </label>
+
+            <div className="row-fields">
+              <label className="field-wrap field-half">
+                <span>Study mode</span>
+                <div className="select-shell">
+                  <select defaultValue="">
+                    <option value="" disabled>
+                      Any mode
+                    </option>
+                    <option>Full-time</option>
+                    <option>Part-time</option>
+                    <option>Online</option>
+                  </select>
+                </div>
+              </label>
+
+              <label className="field-wrap field-half">
+                <span>District</span>
+                <div className="select-shell">
+                  <select defaultValue="">
+                    <option value="" disabled>
+                      Any district
+                    </option>
+                    <option>Colombo</option>
+                    <option>Kandy</option>
+                    <option>Galle</option>
+                    <option>Jaffna</option>
+                  </select>
+                </div>
+              </label>
+            </div>
+
+            <button type="button" className="dashboard-primary">
+              Get recommendations <ArrowRight size={17} />
             </button>
           </div>
-        ) : featured.length ? (
-          <div className="course-grid">
-            {featured.map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
+
+          <div className="guide-panel">
+            <div className="guide-icon-wrap">
+              <div className="guide-icon">
+                <Sparkles size={25} />
+              </div>
+            </div>
+
+            <div className="guide-copy">
+              <h3>Your pathway starts here.</h3>
+              <p>
+                Complete your profile to see suggested career fields, practical
+                guidance, and matching courses.
+              </p>
+            </div>
+
+            <div className="compass-scene">
+              <div className="compass-ring">
+                <div className="needle needle-a" />
+                <div className="needle needle-b" />
+              </div>
+              <div className="orbit orbit-top" />
+              <div className="orbit orbit-mid" />
+              <div className="orbit orbit-bottom" />
+              <div className="path-curve" />
+            </div>
           </div>
-        ) : (
-          <div className="empty-inline">
-            Courses will appear here once they are published.
-          </div>
-        )}
-      </section>
+        </div>
+      </div>
     </div>
   );
 }
