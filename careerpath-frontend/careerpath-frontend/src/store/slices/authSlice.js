@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../api/axios.js";
+import { readSession } from "../../utils/session.js";
 
 export const login = createAsyncThunk(
   "auth/login",
@@ -27,12 +28,11 @@ export const register = createAsyncThunk(
   },
 );
 
-const stored = localStorage.getItem("cp_user");
+const session = readSession();
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: stored ? JSON.parse(stored) : null,
-    token: localStorage.getItem("cp_token") || null,
+    ...session,
     loading: false,
     error: null,
     registered: false,
@@ -53,6 +53,8 @@ const authSlice = createSlice({
     setCredentials: (state, action) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
+      localStorage.setItem("cp_user", JSON.stringify(state.user));
+      localStorage.setItem("cp_token", state.token);
     },
     updateUserProfile: (state, action) => {
       if (!state.user) return;

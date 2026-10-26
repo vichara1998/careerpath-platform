@@ -46,6 +46,12 @@ const apiError = (error) =>
     : "Something went wrong. Please try again.");
 
 function Home() {
+  const navigate = useNavigate();
+  const submitProfile = (event) => {
+    event.preventDefault();
+    const profile = Object.fromEntries(new FormData(event.currentTarget));
+    navigate("/recommendation", { state: { profile } });
+  };
   return (
     <div className="guided-dashboard">
       <div className="page-container dashboard-shell">
@@ -64,20 +70,24 @@ function Home() {
         </div>
 
         <div className="dashboard-panel">
-          <div className="profile-panel">
+          <form className="profile-panel" onSubmit={submitProfile}>
             <h2>Your profile</h2>
 
             <label className="field-wrap">
               <span>Highest qualification</span>
               <div className="select-shell">
-                <select defaultValue="">
+                <select name="qualificationLevel" defaultValue="" required>
                   <option value="" disabled>
                     Choose a level
                   </option>
-                  <option>Secondary education</option>
-                  <option>Diploma</option>
-                  <option>Undergraduate</option>
-                  <option>Postgraduate</option>
+                  <option value="OL_FAIL">O/L incomplete</option>
+                  <option value="OL_PASS">O/L passed</option>
+                  <option value="AL_FAIL">A/L incomplete</option>
+                  <option value="AL_PASS">A/L passed</option>
+                  <option value="DIPLOMA">Diploma</option>
+                  <option value="UNDERGRADUATE">Undergraduate</option>
+                  <option value="GRADUATE">Graduate</option>
+                  <option value="PROFESSIONAL">Professional</option>
                 </select>
               </div>
             </label>
@@ -87,7 +97,8 @@ function Home() {
               <div className="input-shell">
                 <input
                   type="text"
-                  defaultValue="Science, Commerce, Arts, Maths..."
+                  name="stream"
+                  placeholder="Science, Commerce, Arts, Maths..."
                 />
               </div>
             </label>
@@ -97,7 +108,8 @@ function Home() {
               <div className="input-shell">
                 <input
                   type="text"
-                  defaultValue="Software engineering, design"
+                  name="interests"
+                  placeholder="Software engineering, design"
                 />
               </div>
             </label>
@@ -107,7 +119,8 @@ function Home() {
               <div className="input-shell">
                 <input
                   type="text"
-                  defaultValue="Problem solving, communication"
+                  name="skills"
+                  placeholder="Problem solving, communication"
                 />
               </div>
             </label>
@@ -115,7 +128,7 @@ function Home() {
             <label className="field-wrap">
               <span>Career goal</span>
               <div className="input-shell">
-                <input type="text" placeholder="What would you like to do?" />
+                <input name="careerGoal" type="text" placeholder="What would you like to do?" />
               </div>
             </label>
 
@@ -123,13 +136,13 @@ function Home() {
               <label className="field-wrap field-half">
                 <span>Study mode</span>
                 <div className="select-shell">
-                  <select defaultValue="">
-                    <option value="" disabled>
+                  <select name="preferredMode" defaultValue="">
+                    <option value="">
                       Any mode
                     </option>
-                    <option>Full-time</option>
-                    <option>Part-time</option>
-                    <option>Online</option>
+                    <option value="PHYSICAL">Physical</option>
+                    <option value="ONLINE">Online</option>
+                    <option value="HYBRID">Hybrid</option>
                   </select>
                 </div>
               </label>
@@ -137,8 +150,8 @@ function Home() {
               <label className="field-wrap field-half">
                 <span>District</span>
                 <div className="select-shell">
-                  <select defaultValue="">
-                    <option value="" disabled>
+                  <select name="district" defaultValue="">
+                    <option value="">
                       Any district
                     </option>
                     <option>Colombo</option>
@@ -150,10 +163,10 @@ function Home() {
               </label>
             </div>
 
-            <button type="button" className="dashboard-primary">
+            <button type="submit" className="dashboard-primary">
               Get recommendations <ArrowRight size={17} />
             </button>
-          </div>
+          </form>
 
           <div className="guide-panel">
             <div className="guide-icon-wrap">
@@ -954,7 +967,16 @@ function CourseDetails() {
   );
 }
 
+const recommendationPayload = (form) => ({
+  ...form,
+  qualificationLevel: form.qualificationLevel || null,
+  preferredMode: form.preferredMode || null,
+  interests: (form.interests || "").split(",").map((value) => value.trim()).filter(Boolean),
+  skills: (form.skills || "").split(",").map((value) => value.trim()).filter(Boolean),
+});
+
 function Recommendation() {
+  const location = useLocation();
   const [form, setForm] = useState({
     qualificationLevel: "",
     stream: "",
@@ -964,6 +986,7 @@ function Recommendation() {
     careerGoal: "",
     preferredMode: "",
     district: "",
+    ...location.state?.profile,
   });
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -973,23 +996,29 @@ function Recommendation() {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState("");
 
+  useEffect(() => {
+    if (!location.state?.profile) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    recommendApi.getRecommendations(recommendationPayload(location.state.profile), { signal: controller.signal })
+      .then(({ data }) => {
+        if (!controller.signal.aborted) setResult(data.data);
+      })
+      .catch((requestError) => {
+        if (!controller.signal.aborted) setError(apiError(requestError));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [location.state]);
+
   const submitProfile = async (event) => {
     event.preventDefault();
     setLoading(true);
     setError("");
-    const payload = {
-      ...form,
-      qualificationLevel: form.qualificationLevel || null,
-      preferredMode: form.preferredMode || null,
-      interests: form.interests
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean),
-      skills: form.skills
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean),
-    };
+    const payload = recommendationPayload(form);
     try {
       const { data } = await recommendApi.getRecommendations(payload);
       setResult(data.data);
@@ -1247,7 +1276,12 @@ function Login() {
     setError("");
     try {
       await dispatch(login(form)).unwrap();
-      navigate(location.state?.from?.pathname || "/", { replace: true });
+      const destination = location.state?.from;
+      navigate(destination ? {
+        pathname: destination.pathname,
+        search: destination.search,
+        hash: destination.hash,
+      } : "/", { replace: true, state: destination?.state });
     } catch (requestError) {
       setError(requestError);
     } finally {
@@ -1587,6 +1621,14 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/unauthorized" element={
+              <div className="page-container content-section empty-state">
+                <ShieldAlert size={36} aria-hidden="true" />
+                <h1>Access denied</h1>
+                <p>Your account does not have permission to view this page.</p>
+                <Link className="text-link" to="/">Back to home</Link>
+              </div>
+            } />
             <Route
               path="*"
               element={

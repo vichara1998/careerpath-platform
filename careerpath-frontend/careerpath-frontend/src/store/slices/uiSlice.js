@@ -1,8 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
+const savedTheme = localStorage.getItem("theme");
+const darkMode = savedTheme === "dark" ||
+  (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+document.documentElement.classList.toggle("dark", darkMode);
 const uiSlice = createSlice({
   name: "ui",
   initialState: {
-    darkMode: document.documentElement.classList.contains("dark"),
+    darkMode,
     sidebarOpen: true,
   },
   reducers: {
