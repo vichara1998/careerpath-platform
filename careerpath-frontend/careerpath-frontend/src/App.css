@@ -22,6 +22,13 @@ body {
 }
 
 button, input, select { font: inherit; }
+/* Native popup menus need opaque colors independent of transparent select fields. */
+select { color-scheme: light; }
+select option, select optgroup { color: #17201f; background-color: #fffdf8; }
+select option:disabled { color: #69736e; }
+.dark select { color-scheme: dark; }
+.dark select option, .dark select optgroup { color: #ebf5f2; background-color: #123b37; }
+.dark select option:disabled { color: #b2c9c3; }
 button { cursor: pointer; }
 .page-container { width: min(1160px, calc(100% - 40px)); margin-inline: auto; }
 .min-h-screen { min-height: 100vh; }

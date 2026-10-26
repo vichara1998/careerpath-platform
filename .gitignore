@@ -9,6 +9,8 @@
 *.key
 *.p12
 *.pfx
+careerpath-backend/config/mail-local.properties
+careerpath-backend/config/mail-local.properties.example
 
 # Uploaded user content
 /uploads/

@@ -2,6 +2,7 @@ package lk.careerpath.careerpath_backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lk.careerpath.careerpath_backend.exception.EmailDeliveryException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -18,7 +19,6 @@ public class EmailServiceImpl {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    @Async
     public void sendVerificationEmail(String to, String name, String token) {
         try {
             SimpleMailMessage msg = new SimpleMailMessage();
@@ -31,6 +31,7 @@ public class EmailServiceImpl {
             mailSender.send(msg);
         } catch (Exception e) {
             log.error("Failed to send verification email to {}: {}", to, e.getMessage());
+            throw new EmailDeliveryException();
         }
     }
     @Async
@@ -56,7 +57,6 @@ public class EmailServiceImpl {
         }
     }
 
-    @Async
     public void sendPasswordResetEmail(String to, String name, String token) {
         try {
             SimpleMailMessage msg = new SimpleMailMessage();
@@ -69,6 +69,7 @@ public class EmailServiceImpl {
             mailSender.send(msg);
         } catch (Exception e) {
             log.error("Failed to send reset email to {}: {}", to, e.getMessage());
+            throw new EmailDeliveryException();
         }
     }
 

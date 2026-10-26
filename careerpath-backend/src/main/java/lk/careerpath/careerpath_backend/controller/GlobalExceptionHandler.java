@@ -2,6 +2,7 @@ package lk.careerpath.careerpath_backend.controller;
 
 import lk.careerpath.careerpath_backend.dto.response.ApiResponse;
 import lk.careerpath.careerpath_backend.exception.BadRequestException;
+import lk.careerpath.careerpath_backend.exception.EmailDeliveryException;
 import lk.careerpath.careerpath_backend.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -15,6 +16,11 @@ import java.util.*;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+    @ExceptionHandler(EmailDeliveryException.class)
+    public ResponseEntity<ApiResponse<?>> handleEmailDelivery(EmailDeliveryException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));

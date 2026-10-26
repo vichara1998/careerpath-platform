@@ -1336,8 +1336,128 @@ function Login() {
         </button>
       </form>
       <p className="auth-switch">
+        <Link to="/forgot-password">Forgot password?</Link>
+      </p>
+      <p className="auth-switch">
         New to CareerPath? <Link to="/register">Create an account</Link>
       </p>
+    </AuthLayout>
+  );
+}
+
+function ForgotPassword() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async (event) => {
+    event.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    setError("");
+    try {
+      await authApi.forgotPassword(email.trim());
+      setSent(true);
+    } catch (requestError) {
+      setError(apiError(requestError));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AuthLayout title="Forgot your password?" subtitle="Enter your account email to receive a password reset link.">
+      {sent ? (
+        <div className="notice notice-success" role="status">
+          Check your inbox and spam folder for a reset link. The link expires in 30 minutes.
+        </div>
+      ) : (
+        <form className="auth-form" onSubmit={submit}>
+          <label className="field-label">
+            Email
+            <input type="email" autoComplete="email" required value={email}
+              onChange={(event) => setEmail(event.target.value)} />
+          </label>
+          {error && <p className="notice notice-error" role="alert">{error}</p>}
+          <button className="button-primary" disabled={loading}>
+            {loading ? "Sending link..." : "Send reset link"}<ArrowRight size={17} />
+          </button>
+        </form>
+      )}
+      {sent && <p className="auth-switch"><button className="text-link" type="button" onClick={() => setSent(false)}>Try another email</button></p>}
+      <p className="auth-switch"><Link to="/login">Back to sign in</Link></p>
+    </AuthLayout>
+  );
+}
+
+function ResetPassword() {
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token")?.trim();
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [complete, setComplete] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async (event) => {
+    event.preventDefault();
+    if (loading || !token) return;
+    setError("");
+    if (!password.trim() || password !== confirmation) {
+      setError(!password.trim() ? "Enter a password with 8 to 50 characters." : "Passwords do not match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await authApi.resetPassword(token, password);
+      setPassword("");
+      setConfirmation("");
+      setComplete(true);
+      // Remove the consumed reset token from browser history.
+      window.history.replaceState(window.history.state, "", window.location.pathname);
+    } catch (requestError) {
+      setError(apiError(requestError));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AuthLayout title={complete ? "Password updated" : "Choose a new password"}
+      subtitle={complete ? "Your new password is ready. Sign in to continue." : "Use 8 to 50 characters for your new password."}>
+      {complete ? (
+        <p className="notice notice-success" role="status">Your password has been reset successfully.</p>
+      ) : !token ? (
+        <p className="notice notice-error" role="alert">This reset link is missing its token. Request a new link below.</p>
+      ) : (
+        <form className="auth-form" onSubmit={submit}>
+          <label className="field-label">
+            New password
+            <div className="password-input-wrap">
+              <input type={showPassword ? "text" : "password"} required minLength={8} maxLength={50}
+                autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} />
+              <button className="password-visibility-toggle" type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword}
+                onClick={() => setShowPassword((visible) => !visible)}>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </label>
+          <label className="field-label">
+            Confirm new password
+            <input type={showPassword ? "text" : "password"} required minLength={8} maxLength={50}
+              autoComplete="new-password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} />
+          </label>
+          {error && <p className="notice notice-error" role="alert">{error}</p>}
+          <button className="button-primary" disabled={loading}>
+            {loading ? "Updating password..." : "Reset password"}<ArrowRight size={17} />
+          </button>
+        </form>
+      )}
+      {!complete && <p className="auth-switch"><Link to="/forgot-password">Request a new reset link</Link></p>}
+      <p className="auth-switch"><Link to="/login">Back to sign in</Link></p>
     </AuthLayout>
   );
 }
@@ -1619,6 +1739,8 @@ function App() {
               }
             />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/unauthorized" element={
