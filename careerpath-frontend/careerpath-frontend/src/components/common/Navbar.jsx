@@ -6,7 +6,6 @@ import { logout } from "../../store/slices/authSlice.js";
 import { toggleDarkMode } from "../../store/slices/uiSlice.js";
 import {
   ArrowRight,
-  GraduationCap,
   LogOut,
   Menu,
   Moon,
@@ -48,13 +47,8 @@ export default function Navbar() {
       <div className="page-container dashboard-nav-inner">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-8 h-8 rounded-md brand-symbol flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-gray-900 dark:text-white text-lg hidden sm:block">
-              CareerPath <span className="text-brand dark:text-[#f2c65d]">SL</span>
-            </span>
+          <Link to="/" className="brand-image-link" aria-label="CareerPath SL home">
+            <img className="brand-image" src="/careerpath-logo.png" alt="CareerPath SL" />
           </Link>
 
           {/* Desktop nav */}

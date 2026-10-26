@@ -1,18 +1,13 @@
 import { Link } from "react-router-dom";
-import { GraduationCap, Mail, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 export default function Footer() {
   return (
     <footer className="site-footer">
       <div className="page-container site-footer-main">
         <div className="site-footer-brand">
-          <Link to="/" className="site-footer-logo">
-            <span className="site-footer-mark">
-              <GraduationCap size={19} />
-            </span>
-            <span>
-              CareerPath <b>SL</b>
-            </span>
+          <Link to="/" className="brand-image-link" aria-label="CareerPath SL home">
+            <img className="brand-image" src="/careerpath-logo.png" alt="CareerPath SL" loading="lazy" />
           </Link>
           <p>
             Useful education choices, collected in one place for the next

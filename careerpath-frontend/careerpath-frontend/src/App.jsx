@@ -46,12 +46,6 @@ const apiError = (error) =>
 function Home() {
   return (
     <div className="guided-dashboard">
-      <div className="dashboard-scene" aria-hidden="true">
-        <span className="scene-ring ring-one" />
-        <span className="scene-ring ring-two" />
-        <span className="scene-ring ring-three" />
-      </div>
-
       <div className="page-container dashboard-shell">
         <div className="hero-headline-wrap">
           <p className="eyebrow eyebrow-gold">
@@ -174,15 +168,11 @@ function Home() {
               </p>
             </div>
 
-            <div className="compass-scene">
+            <div className="compass-scene" aria-hidden="true">
               <div className="compass-ring">
                 <div className="needle needle-a" />
                 <div className="needle needle-b" />
               </div>
-              <div className="orbit orbit-top" />
-              <div className="orbit orbit-mid" />
-              <div className="orbit orbit-bottom" />
-              <div className="path-curve" />
             </div>
           </div>
         </div>
