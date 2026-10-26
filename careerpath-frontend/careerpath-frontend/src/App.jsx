@@ -24,7 +24,14 @@ import { adminApi } from "./api/adminApi.js";
 import Profile from "./components/profile/Profile.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import { login, register } from "./store/slices/authSlice.js";
-import { ArrowRight, Search, ShieldAlert, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Search,
+  ShieldAlert,
+  Sparkles,
+} from "lucide-react";
 
 const money = (amount) =>
   amount == null
@@ -1207,6 +1214,7 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const submit = async (event) => {
@@ -1242,15 +1250,26 @@ function Login() {
         </label>
         <label className="field-label">
           Password
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            value={form.password}
-            onChange={(event) =>
-              setForm({ ...form, password: event.target.value })
-            }
-          />
+          <div className="password-input-wrap">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              autoComplete="current-password"
+              value={form.password}
+              onChange={(event) =>
+                setForm({ ...form, password: event.target.value })
+              }
+            />
+            <button
+              className="password-visibility-toggle"
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((visible) => !visible)}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </label>
         {error && <p className="notice notice-error">{error}</p>}
         <button className="button-primary" disabled={loading}>
@@ -1358,6 +1377,7 @@ function Register() {
     role: "STUDENT",
     phone: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const submit = async (event) => {
@@ -1408,17 +1428,28 @@ function Register() {
         </label>
         <label className="field-label">
           Password
-          <input
-            type="password"
-            required
-            minLength="8"
-            maxLength="50"
-            autoComplete="new-password"
-            value={form.password}
-            onChange={(event) =>
-              setForm({ ...form, password: event.target.value })
-            }
-          />
+          <div className="password-input-wrap">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              minLength="8"
+              maxLength="50"
+              autoComplete="new-password"
+              value={form.password}
+              onChange={(event) =>
+                setForm({ ...form, password: event.target.value })
+              }
+            />
+            <button
+              className="password-visibility-toggle"
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((visible) => !visible)}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <span>Use 8 to 50 characters.</span>
         </label>
         <label className="field-label">

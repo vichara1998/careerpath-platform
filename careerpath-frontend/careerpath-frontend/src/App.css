@@ -116,6 +116,11 @@ main::before {
 .form-panel h2, .result-panel h2, .chat-panel h2 { font-size: 1.8rem; }
 .field-label { display: grid; gap: 7px; margin-top: 18px; color: var(--ink); font-size: .82rem; font-weight: 700; }
 .field-label > span { color: var(--muted); font-size: .72rem; font-weight: 400; }
+.password-input-wrap { position: relative; display: block; }
+.password-input-wrap input { padding-right: 44px; }
+.password-input-wrap .password-visibility-toggle { position: absolute; top: 50%; right: 8px; display: grid; place-items: center; padding: 6px; transform: translateY(-50%); border: 0; color: var(--muted); background: transparent; cursor: pointer; }
+.password-input-wrap .password-visibility-toggle:hover { color: var(--ink); }
+.password-input-wrap .password-visibility-toggle:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 .form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .form-panel .button-primary { width: 100%; margin-top: 22px; }
 .course-card { display: flex; flex-direction: column; gap: 0; overflow: hidden; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
