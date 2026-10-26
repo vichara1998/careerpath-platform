@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -35,11 +34,11 @@ public class JwtTokenProvider {
 
     // ── Generate tokens ───────────────────────────────────────────────────────
     public String generateToken(UserDetails userDetails) {
-        return buildToken(new HashMap<>(), userDetails, jwtExpirationMs);
+        return buildToken(Map.of("token_type", "access"), userDetails, jwtExpirationMs);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
-        return buildToken(new HashMap<>(), userDetails, refreshExpirationMs);
+        return buildToken(Map.of("token_type", "refresh"), userDetails, refreshExpirationMs);
     }
 
     private String buildToken(Map<String, Object> extraClaims,
@@ -57,11 +56,11 @@ public class JwtTokenProvider {
     // ── Validate ──────────────────────────────────────────────────────────────
     public boolean validateToken(String token) {
         try {
-            Jwts.parser()
+            Claims claims = Jwts.parser()
                     .verifyWith(signingKey())                     // 0.12.x API
                     .build()
-                    .parseSignedClaims(token);                    // 0.12.x API
-            return true;
+                    .parseSignedClaims(token).getPayload();
+            return "access".equals(claims.get("token_type", String.class));
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("Invalid JWT: {}", e.getMessage());
             return false;
@@ -69,7 +68,8 @@ public class JwtTokenProvider {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        return extractUsername(token).equals(userDetails.getUsername())
+        return validateToken(token)
+                && extractUsername(token).equals(userDetails.getUsername())
                 && !isTokenExpired(token);
     }
 

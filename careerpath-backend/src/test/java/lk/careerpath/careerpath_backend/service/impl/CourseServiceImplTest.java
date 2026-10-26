@@ -59,6 +59,21 @@ class CourseServiceImplTest {
     }
 
     @Test
+    void publicDetailsHidePendingAndRejectedCourses() {
+        when(courseRepository.findById(20L)).thenReturn(Optional.of(approvedCourse));
+        approvedCourse.setApproved(false);
+        assertThrows(ResourceNotFoundException.class, () -> courseService.getCourse(20L));
+        approvedCourse.setRejected(true);
+        assertThrows(ResourceNotFoundException.class, () -> courseService.getCourse(20L));
+    }
+
+    @Test
+    void publicDetailsReturnApprovedCourse() {
+        when(courseRepository.findById(20L)).thenReturn(Optional.of(approvedCourse));
+        assertEquals(20L, courseService.getCourse(20L).getId());
+    }
+
+    @Test
     void providerEditResetsApprovalAndFeaturedState() {
         when(courseRepository.findByIdAndCreatedByUserId(20L, 4L))
                 .thenReturn(Optional.of(approvedCourse));

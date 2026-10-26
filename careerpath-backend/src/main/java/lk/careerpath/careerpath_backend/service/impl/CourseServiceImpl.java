@@ -101,7 +101,10 @@ public class CourseServiceImpl {
 
     @Transactional(readOnly = true)
     public CourseResponse getCourse(Long id) {
-        return courseRepository.findById(id).map(this::toResponse)
+        return courseRepository.findById(id)
+                .filter(course -> Boolean.TRUE.equals(course.getApproved())
+                        && !Boolean.TRUE.equals(course.getRejected()))
+                .map(this::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + id));
     }
 

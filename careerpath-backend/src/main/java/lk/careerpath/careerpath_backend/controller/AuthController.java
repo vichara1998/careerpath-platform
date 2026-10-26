@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lk.careerpath.careerpath_backend.dto.request.LoginRequest;
 import lk.careerpath.careerpath_backend.dto.request.RegisterRequest;
+import lk.careerpath.careerpath_backend.dto.request.ResetPasswordRequest;
 import lk.careerpath.careerpath_backend.dto.response.ApiResponse;
 import lk.careerpath.careerpath_backend.dto.response.AuthResponse;
 import lk.careerpath.careerpath_backend.service.impl.AuthServiceImpl;
@@ -48,8 +49,8 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     @Operation(summary = "Reset password with token")
-    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody Map<String, String> body) {
-        authService.resetPassword(body.get("token"), body.get("newPassword"));
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest body) {
+        authService.resetPassword(body.getToken(), body.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success(null, "Password reset successfully"));
     }
 }
