@@ -1,7 +1,8 @@
 import api from "./axios.js";
 export const courseApi = {
-  search: (params) =>
+  search: (params, { signal } = {}) =>
     api.get("/courses/public/search", {
+      signal,
       params: Object.fromEntries(
         Object.entries(params).filter(
           ([, value]) => value !== "" && value != null,

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useAuth } from "../../hooks/useAuth.js";
@@ -168,7 +169,7 @@ export default function Navbar() {
           </div>
         )}
       </div>
-      {logoutOpen && (
+      {logoutOpen && createPortal(
         <div
           className="dialog-backdrop"
           role="presentation"
@@ -198,7 +199,8 @@ export default function Navbar() {
               </button>
             </div>
           </section>
-        </div>
+        </div>,
+        document.body
       )}
     </nav>
   );

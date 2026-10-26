@@ -26,11 +26,13 @@ import { useAuth } from "./hooks/useAuth.js";
 import { login, register } from "./store/slices/authSlice.js";
 import {
   ArrowRight,
+  Check,
   Eye,
   EyeOff,
   Search,
   ShieldAlert,
   Sparkles,
+  X,
 } from "lucide-react";
 
 const money = (amount) =>
@@ -170,8 +172,7 @@ function Home() {
 
             <div className="compass-scene" aria-hidden="true">
               <div className="compass-ring">
-                <div className="needle needle-a" />
-                <div className="needle needle-b" />
+                <Check className="compass-check" strokeWidth={1} />
               </div>
             </div>
           </div>
@@ -182,6 +183,7 @@ function Home() {
 }
 
 function Courses() {
+  const [searchFields, setSearchFields] = useState({ keyword: "", district: "", maxFee: "" });
   const [filters, setFilters] = useState({
     keyword: "",
     type: "",
@@ -197,12 +199,32 @@ function Courses() {
   const [error, setError] = useState("");
   const [retryCount, setRetryCount] = useState(0);
 
+  const searchPending = Object.entries(searchFields).some(
+    ([key, value]) => value.trim() !== filters[key],
+  );
+
+  //debouncing
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const nextFields = Object.fromEntries(
+        Object.entries(searchFields).map(([key, value]) => [key, value.trim()]),
+      );
+      setFilters((current) =>
+        Object.entries(nextFields).some(([key, value]) => current[key] !== value)
+          ? { ...current, ...nextFields, page: 0 }
+          : current,
+      );
+    }, 350);
+    return () => clearTimeout(timeout);
+  }, [searchFields]);
+
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     setLoading(true);
     setError("");
     courseApi
-      .search({ ...filters, size: 12 })
+      .search({ ...filters, size: 12 }, { signal: controller.signal })
       .then(({ data }) => {
         if (!active) return;
         setCourses(data.data?.content || []);
@@ -219,11 +241,14 @@ function Courses() {
       });
     return () => {
       active = false;
+      controller.abort();
     };
   }, [filters, retryCount]);
 
   const update = (key, value) =>
     setFilters((current) => ({ ...current, [key]: value, page: 0 }));
+  const updateSearch = (key, value) =>
+    setSearchFields((current) => ({ ...current, [key]: value }));
 
   return (
     <div className="page-container content-section">
@@ -236,16 +261,25 @@ function Courses() {
       </div>
       <form
         className="course-search"
+        role="search"
         onSubmit={(event) => event.preventDefault()}
       >
         <Search size={19} aria-hidden="true" />
         <input
           aria-label="Search courses"
           placeholder="Search by course, subject or provider"
-          value={filters.keyword}
-          onChange={(event) => update("keyword", event.target.value)}
+          type="search"
+          value={searchFields.keyword}
+          onChange={(event) => updateSearch("keyword", event.target.value)}
         />
-        <span>{pageInfo.totalElements} results</span>
+        {searchFields.keyword && (
+          <button className="course-search-clear" type="button" aria-label="Clear course search" onClick={() => updateSearch("keyword", "")}>
+            <X size={17} aria-hidden="true" />
+          </button>
+        )}
+        <span role="status" aria-live="polite">
+          {loading || searchPending ? "Searching…" : `${pageInfo.totalElements} results`}
+        </span>
       </form>
       <div className="filter-row">
         <select
@@ -284,16 +318,16 @@ function Courses() {
         <input
           aria-label="District"
           placeholder="District"
-          value={filters.district}
-          onChange={(event) => update("district", event.target.value)}
+          value={searchFields.district}
+          onChange={(event) => updateSearch("district", event.target.value)}
         />
         <input
           aria-label="Maximum fee"
           type="number"
           min="0"
           placeholder="Max fee (LKR)"
-          value={filters.maxFee}
-          onChange={(event) => update("maxFee", event.target.value)}
+          value={searchFields.maxFee}
+          onChange={(event) => updateSearch("maxFee", event.target.value)}
         />
       </div>
       {error && (
@@ -327,7 +361,7 @@ function Courses() {
         <div className="pagination">
           <button
             className="button-outline"
-            disabled={filters.page === 0}
+            disabled={loading || searchPending || filters.page === 0}
             onClick={() =>
               setFilters((current) => ({ ...current, page: current.page - 1 }))
             }
@@ -339,7 +373,7 @@ function Courses() {
           </span>
           <button
             className="button-outline"
-            disabled={filters.page + 1 >= pageInfo.totalPages}
+            disabled={loading || searchPending || filters.page + 1 >= pageInfo.totalPages}
             onClick={() =>
               setFilters((current) => ({ ...current, page: current.page + 1 }))
             }
