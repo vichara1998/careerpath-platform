@@ -115,7 +115,7 @@ export default function Navbar() {
                   Login
                 </Link>
                 <Link to="/register" className="dashboard-join bg-brand text-white dark:bg-[#0f766e] dark:text-white">
-                  <span>System</span>
+                  <span>Register</span>
                   <ArrowRight size={15} />
                 </Link>
               </div>
