@@ -26,10 +26,10 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class CourseServiceImplTest {
 
-    @Mock
+    @Mock(mockMaker = "mock-maker-subclass")
     private CourseRepository courseRepository;
 
-    @Mock
+    @Mock(mockMaker = "mock-maker-subclass")
     private UniversityRepository universityRepository;
 
     @InjectMocks
@@ -56,6 +56,13 @@ class CourseServiceImplTest {
                 .rejected(false)
                 .featured(true)
                 .build();
+    }
+
+    @Test
+    void unknownAdminStatusIsRejected() {
+        assertThrows(BadRequestException.class, () -> courseService.getAdminCourses(
+                null, "invalid", null, null, org.springframework.data.domain.PageRequest.of(0, 10)));
+        verifyNoInteractions(courseRepository);
     }
 
     @Test

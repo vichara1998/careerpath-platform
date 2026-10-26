@@ -1,4 +1,5 @@
-import { useState } from "react";
+import ProfileChoices, { districts, interestChoices } from "../profile/ProfileChoices.jsx";
+import { useEffect, useRef, useState } from "react";
 import { Save, X } from "lucide-react";
 import CourseImageField from "./CourseImageField.jsx";
 
@@ -42,12 +43,25 @@ export default function CourseEditModal({
   }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const isNew = !course.id;
+  const dialog = useRef(null);
+  useEffect(() => {
+    const previous = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.current?.querySelector("input, button")?.focus();
+    return () => { document.body.style.overflow = overflow; previous?.focus(); };
+  }, []);
 
   const update = (key, value) =>
     setForm((current) => ({ ...current, [key]: value }));
 
   const submit = async (event) => {
     event.preventDefault();
+    if (form.careerFields.length > 200) {
+      setError("Career fields must fit within 200 characters. Remove a few choices or shorten additional fields.");
+      return;
+    }
     setSaving(true);
     setError("");
     const payload = {
@@ -76,24 +90,34 @@ export default function CourseEditModal({
   };
 
   return (
-    <div className="dialog-backdrop" role="presentation" onMouseDown={onClose}>
+    <div className="dialog-backdrop" role="presentation" onMouseDown={() => !saving && onClose()}>
       <form
+        ref={dialog}
         className="confirm-dialog course-edit-dialog"
         onSubmit={submit}
         onMouseDown={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="course-edit-title"
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && !saving) onClose();
+          if (event.key !== "Tab") return;
+          const controls = dialog.current.querySelectorAll('button:not(:disabled), input:not(:disabled):not([type="hidden"]), select:not(:disabled), textarea:not(:disabled), a[href]');
+          const first = controls[0], last = controls[controls.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        }}
       >
         <div className="course-edit-heading">
           <div>
             <p className="eyebrow">
               {providerEdit ? "PROVIDER EDIT" : "COURSE CATALOGUE"}
             </p>
-            <h2 id="course-edit-title">Edit course</h2>
+            <h2 id="course-edit-title">{isNew ? "Add a course" : "Edit course"}</h2>
           </div>
           <button
             className="course-edit-close"
+            disabled={saving}
             onClick={onClose}
             type="button"
             aria-label="Close editor"
@@ -206,22 +230,10 @@ export default function CourseEditModal({
                 }
               />
             </label>
-            <label className="field-label">
-              Career fields
-              <input
-                value={form.careerFields}
-                onChange={(event) => update("careerFields", event.target.value)}
-              />
-            </label>
-          </div>
+            </div>
+            <ProfileChoices name="careerFields" label="Career fields" options={interestChoices} initialValue={form.careerFields} onChange={(value) => update("careerFields", value)} />
           <div className="form-two">
-            <label className="field-label">
-              District
-              <input
-                value={form.district}
-                onChange={(event) => update("district", event.target.value)}
-              />
-            </label>
+            <label className="field-label">District<select value={form.district} onChange={(event) => update("district", event.target.value)}><option value="">Choose a district (optional)</option>{form.district && !districts.includes(form.district) && <option value={form.district}>{form.district} (current)</option>}{districts.map((district) => <option key={district}>{district}</option>)}</select></label>
             <label className="field-label">
               Province
               <input
@@ -273,7 +285,7 @@ export default function CourseEditModal({
           </p>
         )}
         <div className="confirm-actions">
-          <button className="button-outline" onClick={onClose} type="button">
+          <button className="button-outline" disabled={saving} onClick={onClose} type="button">
             Cancel
           </button>
           <button className="button-primary" disabled={saving} type="submit">
@@ -282,7 +294,7 @@ export default function CourseEditModal({
               ? "Saving..."
               : providerEdit
                 ? "Save and resubmit"
-                : "Save changes"}
+                : isNew ? "Create for review" : "Save changes"}
           </button>
         </div>
       </form>

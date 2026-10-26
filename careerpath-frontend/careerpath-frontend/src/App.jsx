@@ -1,3 +1,4 @@
+import AdminDesk from "./components/admin/AdminDesk.jsx";
 import { useEffect, useState } from "react";
 import {
   BrowserRouter,
@@ -14,15 +15,16 @@ import Navbar from "./components/common/Navbar.jsx";
 import Footer from "./components/common/Footer.jsx";
 import ProtectedRoute from "./components/common/ProtectedRoute.jsx";
 import CourseCard from "./components/courses/CourseCard.jsx";
-import CourseImageField from "./components/courses/CourseImageField.jsx";
-import CourseEditModal from "./components/courses/CourseEditModal.jsx";
+
+
 import ProviderCourseSubmission from "./components/courses/ProviderCourseSubmission.jsx";
 import { courseApi } from "./api/courseApi.js";
 import { recommendApi } from "./api/recommendApi.js";
 import { authApi } from "./api/authApi.js";
-import { adminApi } from "./api/adminApi.js";
+
 import Profile from "./components/profile/Profile.jsx";
-import { useAuth } from "./hooks/useAuth.js";
+import ProfileChoices, { districts, studyStreams, interestChoices, skillChoices, goalChoices } from "./components/profile/ProfileChoices.jsx";
+
 import { login, register } from "./store/slices/authSlice.js";
 import {
   ArrowRight,
@@ -94,43 +96,17 @@ function Home() {
 
             <label className="field-wrap">
               <span>Study stream</span>
-              <div className="input-shell">
-                <input
-                  type="text"
-                  name="stream"
-                  placeholder="Science, Commerce, Arts, Maths..."
-                />
+              <div className="select-shell">
+                <select name="stream" defaultValue="">
+                  <option value="">Choose a stream (optional)</option>
+                  {studyStreams.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
               </div>
             </label>
 
-            <label className="field-wrap">
-              <span>Interests</span>
-              <div className="input-shell">
-                <input
-                  type="text"
-                  name="interests"
-                  placeholder="Software engineering, design"
-                />
-              </div>
-            </label>
-
-            <label className="field-wrap">
-              <span>Skills</span>
-              <div className="input-shell">
-                <input
-                  type="text"
-                  name="skills"
-                  placeholder="Problem solving, communication"
-                />
-              </div>
-            </label>
-
-            <label className="field-wrap">
-              <span>Career goal</span>
-              <div className="input-shell">
-                <input name="careerGoal" type="text" placeholder="What would you like to do?" />
-              </div>
-            </label>
+            <ProfileChoices name="interests" label="Interests" options={interestChoices} />
+            <ProfileChoices name="skills" label="Skills" options={skillChoices} />
+            <ProfileChoices name="careerGoal" label="Career goals" options={goalChoices} />
 
             <div className="row-fields">
               <label className="field-wrap field-half">
@@ -154,10 +130,7 @@ function Home() {
                     <option value="">
                       Any district
                     </option>
-                    <option>Colombo</option>
-                    <option>Kandy</option>
-                    <option>Galle</option>
-                    <option>Jaffna</option>
+                    {districts.map((district) => <option key={district}>{district}</option>)}
                   </select>
                 </div>
               </label>
@@ -328,12 +301,18 @@ function Courses() {
             </option>
           ))}
         </select>
-        <input
+        <select
           aria-label="District"
-          placeholder="District"
           value={searchFields.district}
           onChange={(event) => updateSearch("district", event.target.value)}
-        />
+        >
+          <option value="">All districts</option>
+          {districts.map((district) => <option key={district}>{district}</option>)}
+        </select>
+        <select aria-label="Career field" value={filters.careerField} onChange={(event) => update("careerField", event.target.value)}>
+          <option value="">All career fields</option>
+          {interestChoices.map((field) => <option key={field}>{field}</option>)}
+        </select>
         <input
           aria-label="Maximum fee"
           type="number"
@@ -393,472 +372,6 @@ function Courses() {
           >
             Next
           </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AdminDesk() {
-  const { user: currentUser } = useAuth();
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    type: "DEGREE",
-    level: "",
-    mode: "PHYSICAL",
-    feePerYear: "",
-    totalFee: "",
-    eligibility: "",
-    durationMonths: "",
-    district: "Colombo",
-    province: "Western",
-    careerFields: "",
-    thumbnailUrl: "",
-    universityId: "",
-  });
-  const [createdCourse, setCreatedCourse] = useState(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [pendingCourses, setPendingCourses] = useState([]);
-  const [pendingError, setPendingError] = useState("");
-  const [users, setUsers] = useState([]);
-  const [allCourses, setAllCourses] = useState([]);
-  const [recordsError, setRecordsError] = useState("");
-  const [confirmAction, setConfirmAction] = useState(null);
-  const [editCourse, setEditCourse] = useState(null);
-
-  const loadPendingCourses = () => {
-    adminApi
-      .getPendingCourses({ page: 0, size: 20 })
-      .then(({ data }) => setPendingCourses(data.data?.content || []))
-      .catch((requestError) => setPendingError(apiError(requestError)));
-  };
-
-  const loadAdminRecords = () => {
-    Promise.all([
-      adminApi.getUsers(),
-      adminApi.getAllCourses({ page: 0, size: 50 }),
-    ])
-      .then(([usersResponse, coursesResponse]) => {
-        setUsers(usersResponse.data.data || []);
-        setAllCourses(coursesResponse.data.data?.content || []);
-      })
-      .catch((requestError) => setRecordsError(apiError(requestError)));
-  };
-
-  useEffect(() => {
-    loadPendingCourses();
-    loadAdminRecords();
-  }, []);
-
-  const deleteUser = (user) => {
-    if (user.email === currentUser?.email) return;
-    setConfirmAction({
-      title: "Delete this user?",
-      message: `${user.fullName}'s account and related data will be removed. This cannot be undone.`,
-      confirmLabel: "Delete user",
-      action: () => adminApi.deleteUser(user.id).then(loadAdminRecords),
-    });
-  };
-
-  const deleteCourse = (course) => {
-    setConfirmAction({
-      title: "Delete this course?",
-      message: `"${course.title}" will be permanently removed from the catalogue.`,
-      confirmLabel: "Delete course",
-      action: () =>
-        adminApi.deleteCourse(course.id).then(() => {
-          loadAdminRecords();
-          loadPendingCourses();
-        }),
-    });
-  };
-
-  const rejectCourse = (course) => {
-    setConfirmAction({
-      title: "Reject this course?",
-      message: `"${course.title}" will be marked rejected and kept out of the public directory.`,
-      confirmLabel: "Reject course",
-      action: () =>
-        adminApi.rejectCourse(course.id).then(() => {
-          loadAdminRecords();
-          loadPendingCourses();
-        }),
-    });
-  };
-
-  const runConfirmedAction = () => {
-    confirmAction
-      ?.action()
-      .catch((requestError) => setRecordsError(apiError(requestError)))
-      .finally(() => setConfirmAction(null));
-  };
-
-  const saveCourse = async (courseId, payload) => {
-    setRecordsError("");
-    const { data } = await adminApi.updateCourse(courseId, payload);
-    setAllCourses((current) =>
-      current.map((course) =>
-        course.id === data.data.id ? data.data : course,
-      ),
-    );
-    setPendingCourses((current) =>
-      current.map((course) =>
-        course.id === data.data.id ? data.data : course,
-      ),
-    );
-    return data.data;
-  };
-
-  const update = (key, value) =>
-    setForm((current) => ({ ...current, [key]: value }));
-
-  const submit = async (event) => {
-    event.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const payload = {
-        ...form,
-        universityId: Number(form.universityId),
-        feePerYear: form.feePerYear ? Number(form.feePerYear) : null,
-        totalFee: form.totalFee ? Number(form.totalFee) : null,
-        durationMonths: form.durationMonths
-          ? Number(form.durationMonths)
-          : null,
-      };
-      const { data } = await courseApi.create(payload);
-      setCreatedCourse(data.data);
-      setForm((current) => ({
-        ...current,
-        title: "",
-        description: "",
-        thumbnailUrl: "",
-      }));
-      loadPendingCourses();
-    } catch (requestError) {
-      setError(apiError(requestError));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="page-container content-section admin-desk">
-      <div className="page-intro admin-intro">
-        <p className="eyebrow">ADMIN DESK</p>
-        <h1>Keep the catalogue useful.</h1>
-        <p>
-          Add a course for review, keep provider information consistent, and
-          make the public directory worth returning to.
-        </p>
-      </div>
-      <div className="admin-layout">
-        <form className="form-panel admin-course-form" onSubmit={submit}>
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">CATALOGUE</p>
-              <h2>Add a course</h2>
-            </div>
-            <span className="admin-status">Needs approval</span>
-          </div>
-          <label className="field-label">
-            Course title
-            <input
-              required
-              value={form.title}
-              onChange={(event) => update("title", event.target.value)}
-              placeholder="BSc (Hons) Software Engineering"
-            />
-          </label>
-          <label className="field-label">
-            Description
-            <textarea
-              value={form.description}
-              onChange={(event) => update("description", event.target.value)}
-              placeholder="What will students learn?"
-              rows="4"
-            />
-          </label>
-          <CourseImageField
-            value={form.thumbnailUrl}
-            onChange={(value) => update("thumbnailUrl", value)}
-          />
-          <div className="form-two">
-            <label className="field-label">
-              University ID
-              <input
-                required
-                type="number"
-                min="1"
-                value={form.universityId}
-                onChange={(event) => update("universityId", event.target.value)}
-                placeholder="For example, 6 for SLIIT"
-              />
-            </label>
-            <label className="field-label">
-              Level
-              <input
-                value={form.level}
-                onChange={(event) => update("level", event.target.value)}
-                placeholder="BSc (Hons)"
-              />
-            </label>
-          </div>
-          <div className="form-two">
-            <label className="field-label">
-              Course type
-              <select
-                value={form.type}
-                onChange={(event) => update("type", event.target.value)}
-              >
-                {[
-                  "DEGREE",
-                  "DIPLOMA",
-                  "NVQ",
-                  "CERTIFICATE",
-                  "ONLINE_CERTIFICATION",
-                  "VOCATIONAL",
-                  "SHORT_COURSE",
-                  "POSTGRADUATE",
-                ].map((type) => (
-                  <option key={type}>{type}</option>
-                ))}
-              </select>
-            </label>
-            <label className="field-label">
-              Study mode
-              <select
-                value={form.mode}
-                onChange={(event) => update("mode", event.target.value)}
-              >
-                {["PHYSICAL", "ONLINE", "HYBRID"].map((mode) => (
-                  <option key={mode}>{mode}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <div className="form-two">
-            <label className="field-label">
-              Total fee (LKR)
-              <input
-                type="number"
-                min="0"
-                value={form.totalFee}
-                onChange={(event) => update("totalFee", event.target.value)}
-              />
-            </label>
-            <label className="field-label">
-              Duration (months)
-              <input
-                type="number"
-                min="1"
-                value={form.durationMonths}
-                onChange={(event) =>
-                  update("durationMonths", event.target.value)
-                }
-              />
-            </label>
-          </div>
-          <label className="field-label">
-            Career fields <span>comma separated</span>
-            <input
-              value={form.careerFields}
-              onChange={(event) => update("careerFields", event.target.value)}
-              placeholder="Software Engineering, Data Science"
-            />
-          </label>
-          {error && <p className="notice notice-error">{error}</p>}
-          <button className="button-primary" disabled={loading}>
-            {loading ? "Saving course..." : "Submit course"}
-            <ArrowRight size={17} />
-          </button>
-        </form>
-        <aside className="admin-side-panel">
-          <p className="eyebrow">ADMIN NOTE</p>
-          <h2>One clean source of truth.</h2>
-          <p>
-            New courses are saved as pending by the backend. An administrator
-            can approve them before they appear in the public directory.
-          </p>
-          <div className="admin-rule" />
-          <p className="detail-muted">
-            University IDs follow the seeded catalogue: SLIIT is 6, NSBM is 7,
-            NIBM is 8.
-          </p>
-          {createdCourse && (
-            <div className="notice notice-success">
-              {createdCourse.title} was saved for approval.
-            </div>
-          )}
-        </aside>
-      </div>
-      <section className="admin-queue">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">REVIEW QUEUE</p>
-            <h2>Courses waiting for approval</h2>
-          </div>
-          <span className="queue-count">{pendingCourses.length} pending</span>
-        </div>
-        {pendingError && <p className="notice notice-error">{pendingError}</p>}
-        {pendingCourses.length
-          ? pendingCourses.map((course) => (
-              <article className="pending-row" key={course.id}>
-                <div>
-                  <strong>{course.title}</strong>
-                  <span>
-                    {course.universityName} · {course.type} · {course.mode}
-                  </span>
-                </div>
-                <button
-                  className="button-primary"
-                  onClick={() =>
-                    adminApi
-                      .approveCourse(course.id)
-                      .then(loadPendingCourses)
-                      .catch((requestError) =>
-                        setPendingError(apiError(requestError)),
-                      )
-                  }
-                >
-                  Approve course
-                </button>
-                <button
-                  className="danger-button"
-                  onClick={() => rejectCourse(course)}
-                >
-                  Reject
-                </button>
-              </article>
-            ))
-          : !pendingError && (
-              <p className="empty-inline">No courses are waiting for review.</p>
-            )}
-      </section>
-      <section className="admin-records">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">CONTROL ROOM</p>
-            <h2>Users and courses</h2>
-          </div>
-          <span className="queue-count">
-            {users.length} users · {allCourses.length} courses
-          </span>
-        </div>
-        {recordsError && <p className="notice notice-error">{recordsError}</p>}
-        <div className="admin-table-wrap">
-          <div className="admin-table-heading">
-            <strong>Users</strong>
-            <span>Account access and roles</span>
-          </div>
-          {users.map((adminUser) => (
-            <div className="admin-table-row" key={adminUser.id}>
-              <div>
-                <strong>{adminUser.fullName}</strong>
-                <span>{adminUser.email}</span>
-              </div>
-              <span className="admin-row-meta">
-                {adminUser.role.replace("ROLE_", "")} · {adminUser.status}
-              </span>
-              <button
-                className="danger-button"
-                disabled={adminUser.email === currentUser?.email}
-                onClick={() => deleteUser(adminUser)}
-              >
-                {adminUser.email === currentUser?.email
-                  ? "Current account"
-                  : "Delete user"}
-              </button>
-            </div>
-          ))}
-        </div>
-        <div className="admin-table-wrap">
-          <div className="admin-table-heading">
-            <strong>Courses</strong>
-            <span>Published and pending catalogue entries</span>
-          </div>
-          {allCourses.map((course) => (
-            <div
-              className="admin-table-row admin-course-record"
-              key={course.id}
-            >
-              <div>
-                <strong>{course.title}</strong>
-                <span>
-                  {course.universityName} · {course.type}
-                </span>
-              </div>
-              <span
-                className={`admin-row-meta ${course.approved ? "is-approved" : course.rejected ? "is-rejected" : "is-pending"}`}
-              >
-                {course.approved
-                  ? "Published"
-                  : course.rejected
-                    ? "Rejected"
-                    : "Pending"}
-              </span>
-              <div className="admin-course-actions">
-                <button
-                  className="button-outline"
-                  onClick={() => {
-                    setRecordsError("");
-                    setEditCourse(course);
-                  }}
-                  type="button"
-                >
-                  Edit course
-                </button>
-                <button
-                  className="danger-button"
-                  onClick={() => deleteCourse(course)}
-                  type="button"
-                >
-                  Delete course
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-      {editCourse && (
-        <CourseEditModal
-          course={editCourse}
-          onClose={() => setEditCourse(null)}
-          onSave={saveCourse}
-        />
-      )}
-      {confirmAction && (
-        <div
-          className="dialog-backdrop"
-          role="presentation"
-          onMouseDown={() => setConfirmAction(null)}
-        >
-          <section
-            className="confirm-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="admin-confirm-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="confirm-icon">
-              <ShieldAlert size={19} />
-            </div>
-            <h2 id="admin-confirm-title">{confirmAction.title}</h2>
-            <p>{confirmAction.message}</p>
-            <div className="confirm-actions">
-              <button
-                className="button-outline"
-                onClick={() => setConfirmAction(null)}
-              >
-                Cancel
-              </button>
-              <button className="button-primary" onClick={runConfirmedAction}>
-                {confirmAction.confirmLabel}
-              </button>
-            </div>
-          </section>
         </div>
       )}
     </div>
@@ -1091,46 +604,10 @@ function Recommendation() {
               ))}
             </select>
           </label>
-          <label className="field-label">
-            Study stream
-            <input
-              placeholder="Science, Commerce, Arts, Maths..."
-              value={form.stream}
-              onChange={(event) =>
-                setForm({ ...form, stream: event.target.value })
-              }
-            />
-          </label>
-          <label className="field-label">
-            Interests <span>comma separated</span>
-            <input
-              placeholder="Software engineering, design"
-              value={form.interests}
-              onChange={(event) =>
-                setForm({ ...form, interests: event.target.value })
-              }
-            />
-          </label>
-          <label className="field-label">
-            Skills <span>comma separated</span>
-            <input
-              placeholder="Problem solving, communication"
-              value={form.skills}
-              onChange={(event) =>
-                setForm({ ...form, skills: event.target.value })
-              }
-            />
-          </label>
-          <label className="field-label">
-            Career goal
-            <input
-              placeholder="What would you like to do?"
-              value={form.careerGoal}
-              onChange={(event) =>
-                setForm({ ...form, careerGoal: event.target.value })
-              }
-            />
-          </label>
+          <label className="field-label">Study stream<select value={form.stream} onChange={(event) => setForm({ ...form, stream: event.target.value })}><option value="">Choose a stream (optional)</option>{studyStreams.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <ProfileChoices name="interests" label="Interests" options={interestChoices} initialValue={form.interests} onChange={(value) => setForm((current) => ({ ...current, interests: value }))} />
+          <ProfileChoices name="skills" label="Skills" options={skillChoices} initialValue={form.skills} onChange={(value) => setForm((current) => ({ ...current, skills: value }))} />
+          <ProfileChoices name="careerGoal" label="Career goals" options={goalChoices} initialValue={form.careerGoal} onChange={(value) => setForm((current) => ({ ...current, careerGoal: value }))} />
           <div className="form-two">
             <label className="field-label">
               Study mode
@@ -1146,16 +623,7 @@ function Recommendation() {
                 ))}
               </select>
             </label>
-            <label className="field-label">
-              District
-              <input
-                placeholder="Any district"
-                value={form.district}
-                onChange={(event) =>
-                  setForm({ ...form, district: event.target.value })
-                }
-              />
-            </label>
+            <label className="field-label">District<select value={form.district} onChange={(event) => setForm({ ...form, district: event.target.value })}><option value="">Any district</option>{districts.map((district) => <option key={district}>{district}</option>)}</select></label>
           </div>
           {error && <p className="notice notice-error">{error}</p>}
           <button className="button-primary" type="submit" disabled={loading}>

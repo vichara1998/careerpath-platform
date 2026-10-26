@@ -14,6 +14,8 @@ test("home submits entered profile values to the protected recommendation flow",
     FormData: class { constructor(form) { return Object.entries(form); } },
     React: { createElement: (type, props, ...children) => ({ type, props, children }) },
     ArrowRight: "ArrowRight", Sparkles: "Sparkles", Check: "Check",
+    ProfileChoices: "ProfileChoices", districts: ["Colombo"], studyStreams: [["Bio", "Biological Science"]],
+    interestChoices: [], skillChoices: [], goalChoices: [],
   };
   runInNewContext(transformSync(source, { loader: "jsx" }).code, context);
   const root = context.Home();

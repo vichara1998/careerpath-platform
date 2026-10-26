@@ -1,3 +1,4 @@
+import ProfileChoices, { districts, interestChoices } from "../profile/ProfileChoices.jsx";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { adminApi } from "../../api/adminApi.js";
@@ -30,6 +31,7 @@ export default function ProviderCourseSubmission() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ROLE_ADMIN";
   const [form, setForm] = useState(emptyCourse);
+  const [formVersion, setFormVersion] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -60,6 +62,10 @@ export default function ProviderCourseSubmission() {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (form.careerFields.length > 200) {
+      setError("Career fields must fit within 200 characters. Remove a few choices or shorten additional fields.");
+      return;
+    }
     setSaving(true);
     setError("");
     setSuccess("");
@@ -78,6 +84,7 @@ export default function ProviderCourseSubmission() {
       setSuccess(`“${data.data.title}” was submitted for review.`);
       setMyCourses((current) => [data.data, ...current]);
       setForm(emptyCourse);
+      setFormVersion((current) => current + 1);
     } catch (requestError) {
       setError(
         requestError.response?.data?.message ||
@@ -115,7 +122,7 @@ export default function ProviderCourseSubmission() {
           reviewed before publication.
         </p>
       </header>
-      <form className="form-panel provider-course-form" onSubmit={submit}>
+      <form key={formVersion} className="form-panel provider-course-form" onSubmit={submit}>
         <label className="field-label">
           Course title
           <input
@@ -224,23 +231,10 @@ export default function ProviderCourseSubmission() {
               onChange={(event) => update("durationMonths", event.target.value)}
             />
           </label>
-          <label className="field-label">
-            Career fields <span>comma separated</span>
-            <input
-              value={form.careerFields}
-              onChange={(event) => update("careerFields", event.target.value)}
-              placeholder="Software Engineering, Data Science"
-            />
-          </label>
-        </div>
+          </div>
+          <ProfileChoices name="careerFields" label="Career fields" options={interestChoices} initialValue={form.careerFields} onChange={(value) => update("careerFields", value)} />
         <div className="form-two">
-          <label className="field-label">
-            District
-            <input
-              value={form.district}
-              onChange={(event) => update("district", event.target.value)}
-            />
-          </label>
+          <label className="field-label">District<select value={form.district} onChange={(event) => update("district", event.target.value)}><option value="">Choose a district (optional)</option>{form.district && !districts.includes(form.district) && <option value={form.district}>{form.district} (current)</option>}{districts.map((district) => <option key={district}>{district}</option>)}</select></label>
           <label className="field-label">
             Province
             <input

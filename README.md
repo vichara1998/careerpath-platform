@@ -40,7 +40,7 @@ The experience is designed to be clear on desktop and mobile, with a focused cou
 | Career assistant | Ask questions about education and career choices in Sri Lanka, with an optional Gemini-powered assistant |
 | Learner account | Register, sign in, verify an email address, and manage profile details and a profile picture |
 | Provider workspace | Submit course information and images, then manage provider course listings |
-| Admin desk | Review and manage course listings, approve or reject submissions, and manage user accounts |
+| Admin desk | Search all courses by title or institution, filter by status/type/district, paginate the catalogue, add/edit courses in a dialog, review publication counts, and search/manage user accounts |
 | Responsive experience | Use the application on desktop and mobile, with a selectable dark theme |
 
 ## A guided journey
@@ -213,6 +213,10 @@ npm run build
 Full-page desktop and mobile screenshots are collected locally in `portfolio-screenshots`. They are intended for portfolio and social media use and are excluded from Git by the root ignore rules.
 
 ## Configuration notes
+
+Course search and the provider/admin editors share the profile's career-field options and all 25 district names. Career fields support multiple selections and custom entries; existing custom tags remain editable. The sample course SQL uses the same comma-separated format.
+
+For an existing MySQL catalogue, `careerpath-backend/tools/NormalizeCourseCatalog.java` provides a preview-first metadata cleanup. Run it with Java 21+ and the MySQL JDBC driver on the classpath, using `USER_NAME`, `DB_PASSWORD`, and optionally `DB_URL` from the backend environment. With no arguments it reports the number of proposed changes. `--self-test` checks normalization without a database; `--apply` normalizes recognized district spellings and career-field formatting in a transaction. It preserves unknown locations and custom fields, and stores original changed values in `course_profile_alignment_backup`. Repeated runs are safe. It does not change course fees, eligibility, dates, approval, or ownership. This cleanup does not verify the accuracy of sample course information.
 
 - Never commit production secrets, signing keys, database passwords, or third-party API keys.
 - Use a strong JWT secret outside local development.

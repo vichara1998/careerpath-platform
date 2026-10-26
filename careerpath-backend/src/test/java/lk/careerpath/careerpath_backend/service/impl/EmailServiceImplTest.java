@@ -18,7 +18,7 @@ class EmailServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        sender = mock(JavaMailSender.class);
+        sender = mock(JavaMailSender.class, withSettings().mockMaker("mock-maker-subclass"));
         service = new EmailServiceImpl(sender);
         ReflectionTestUtils.setField(service, "fromEmail", "verified@example.com");
         ReflectionTestUtils.setField(service, "frontendUrl", "https://careerpath.example.com");

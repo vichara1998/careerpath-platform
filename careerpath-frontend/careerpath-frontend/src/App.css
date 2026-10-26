@@ -30,6 +30,20 @@ select option:disabled { color: #69736e; }
 .dark select option, .dark select optgroup { color: #ebf5f2; background-color: #123b37; }
 .dark select option:disabled { color: #b2c9c3; }
 button { cursor: pointer; }
+.profile-choice-field { min-width: 0; margin: 0 0 1.3rem; padding: 0; border: 0; }
+.profile-choice-field legend { padding: 0; color: var(--ink); font-size: .96rem; }
+.profile-choice-hint { margin: .4rem 0 .65rem; color: var(--muted); font-size: .8rem; }
+.profile-choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: .5rem; }
+.profile-choice > span { min-width: 0; overflow-wrap: anywhere; }
+.profile-choice { display: flex; align-items: center; gap: .55rem; padding: .65rem; border: 1px solid var(--line); border-radius: .65rem; color: var(--ink); font-size: .82rem; cursor: pointer; }
+.profile-choice:has(input:checked) { border-color: var(--teal); background: rgba(22, 116, 107, .12); }
+.profile-choice:focus-within { outline: 2px solid var(--teal); outline-offset: 2px; }
+.profile-choice input[type="checkbox"] { flex: 0 0 auto; width: 1rem; height: 1rem; margin: 0; accent-color: var(--teal); }
+.profile-choice-additional { display: grid; gap: .4rem; margin-top: .75rem; color: var(--muted); font-size: .8rem; }
+.dark .profile-choice-field legend, .dark .profile-choice { color: #ebf5f2; }
+.dark .profile-choice-hint, .dark .profile-choice-additional { color: #b2c9c3; }
+.dark .profile-choice:has(input:checked) { border-color: #83c9ba; background: rgba(113, 171, 157, .15); }
+@media (max-width: 420px) { .profile-choice-grid { grid-template-columns: 1fr; } }
 .page-container { width: min(1160px, calc(100% - 40px)); margin-inline: auto; }
 .min-h-screen { min-height: 100vh; }
 
@@ -106,7 +120,7 @@ main::before {
 .course-search input { flex: 1; min-width: 0; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 1rem; }
 .course-search svg { color: var(--coral); }
 .course-search span { color: var(--muted); font-size: .8rem; white-space: nowrap; }
-.filter-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 30px; }
+.filter-row { display: grid; grid-template-columns: 1.1fr 1fr 1fr 1.3fr 1fr; gap: 10px; margin-bottom: 30px; }
 .filter-row input, .filter-row select, .field-label input, .field-label select, .chat-form input { width: 100%; border: 1px solid var(--line); border-radius: 3px; padding: 12px 13px; outline: 0; color: var(--ink); background: var(--surface); }
 .field-label textarea { width: 100%; resize: vertical; border: 1px solid var(--line); border-radius: 3px; padding: 12px 13px; outline: 0; color: var(--ink); background: var(--surface); }
 .filter-row input:focus, .filter-row select:focus, .field-label input:focus, .field-label select:focus, .chat-form input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(22,116,107,.1); }
@@ -136,7 +150,7 @@ main::before {
 .password-input-wrap .password-visibility-toggle { position: absolute; top: 50%; right: 8px; display: grid; place-items: center; padding: 6px; transform: translateY(-50%); border: 0; color: var(--muted); background: transparent; cursor: pointer; }
 .password-input-wrap .password-visibility-toggle:hover { color: var(--ink); }
 .password-input-wrap .password-visibility-toggle:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
-.form-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; }
 .form-panel .button-primary { width: 100%; margin-top: 22px; }
 .course-card { display: flex; flex-direction: column; gap: 0; overflow: hidden; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
 .course-card-art { position: relative; display: flex; height: 104px; flex: 0 0 auto; align-items: flex-end; justify-content: space-between; overflow: hidden; isolation: isolate; margin: 0 !important; padding: 12px 18px; color: var(--course-art-ink, #174f48); background-color: var(--course-art-bg, #e3efe9); background-image: repeating-linear-gradient(135deg, transparent 0 13px, var(--course-art-line, rgba(22,116,107,.11)) 14px 15px); }

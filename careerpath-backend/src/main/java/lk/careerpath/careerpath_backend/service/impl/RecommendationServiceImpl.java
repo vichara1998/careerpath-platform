@@ -85,7 +85,9 @@ public class RecommendationServiceImpl {
             }
             case AL_FAIL -> fields.addAll(List.of("Diploma", "NVQ Level 4/5", "Online Certifications"));
             case AL_PASS -> {
-                if ("Bio".equalsIgnoreCase(req.getStream()))
+                if ("BioTechnology".equalsIgnoreCase(req.getStream()))
+                    fields.addAll(List.of("Agriculture", "Food Technology", "Environmental Science"));
+                else if ("Bio".equalsIgnoreCase(req.getStream()))
                     fields.addAll(List.of("Medicine", "Nursing", "Agriculture"));
                 else if ("Maths".equalsIgnoreCase(req.getStream()) || "Technology".equalsIgnoreCase(req.getStream()))
                     fields.addAll(List.of("Software Engineering", "Cybersecurity", "Data Science", "AI/ML"));

@@ -13,10 +13,13 @@ import lk.careerpath.careerpath_backend.repository.UniversityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -97,6 +100,44 @@ public class CourseServiceImpl {
     @Transactional(readOnly = true)
     public Page<CourseResponse> getAllCourses(Pageable pageable) {
         return courseRepository.findAll(pageable).map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CourseResponse> getAdminCourses(String keyword, String status, CourseType type,
+            String district, Pageable pageable) {
+        return courseRepository.findAll(adminFilter(keyword, status, type, district), pageable).map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getAdminCourseSummary() {
+        return Map.of("total", courseRepository.count(),
+                "published", courseRepository.count(adminFilter(null, "published", null, null)),
+                "pending", courseRepository.count(adminFilter(null, "pending", null, null)),
+                "rejected", courseRepository.count(adminFilter(null, "rejected", null, null)));
+    }
+
+    private Specification<Course> adminFilter(String keyword, String status, CourseType type, String district) {
+        String state = status == null ? "all" : status.toLowerCase(Locale.ROOT);
+        if (!List.of("all", "published", "pending", "rejected").contains(state))
+            throw new BadRequestException("Unknown course status");
+        return (root, query, cb) -> {
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            if (keyword != null && !keyword.isBlank()) {
+                String pattern = "%" + keyword.trim().toLowerCase(Locale.ROOT)
+                        .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+                predicates.add(cb.or(cb.like(cb.lower(root.get("title")), pattern, '\\'),
+                        cb.like(cb.lower(root.get("university").get("name")), pattern, '\\')));
+            }
+            if (type != null) predicates.add(cb.equal(root.get("type"), type));
+            if (district != null && !district.isBlank()) predicates.add(cb.equal(root.get("district"), district));
+            if (state.equals("published")) predicates.add(cb.isTrue(root.get("approved")));
+            if (state.equals("rejected")) predicates.add(cb.isTrue(root.get("rejected")));
+            if (state.equals("pending")) {
+                predicates.add(cb.or(cb.isFalse(root.get("approved")), cb.isNull(root.get("approved"))));
+                predicates.add(cb.or(cb.isFalse(root.get("rejected")), cb.isNull(root.get("rejected"))));
+            }
+            return cb.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
     }
 
     @Transactional(readOnly = true)

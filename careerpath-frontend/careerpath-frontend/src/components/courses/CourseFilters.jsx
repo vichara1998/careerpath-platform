@@ -1,9 +1,9 @@
-import { Search, X } from 'lucide-react'
-import { useState } from 'react'
+import { X } from 'lucide-react'
+import { districts, interestChoices } from '../profile/ProfileChoices.jsx'
 
 const COURSE_TYPES = ['DEGREE','DIPLOMA','NVQ','CERTIFICATE','ONLINE_CERTIFICATION','VOCATIONAL','SHORT_COURSE','POSTGRADUATE']
 const MODES        = ['PHYSICAL','ONLINE','HYBRID']
-const CAREER_FIELDS = ['Software Engineering','Data Science','Cybersecurity','Business','Marketing','Medicine','Engineering','Agriculture','Tourism','AI/ML','Networking','Accounting','Arts & Design','Media Studies']
+const CAREER_FIELDS = interestChoices
 
 export default function CourseFilters({ filters, onChange, onClear }) {
   return (
@@ -47,8 +47,10 @@ export default function CourseFilters({ filters, onChange, onClear }) {
 
       <div>
         <label className="label">District</label>
-        <input className="input text-sm" placeholder="e.g. Colombo"
-          value={filters.district || ''} onChange={e => onChange('district', e.target.value || null)} />
+        <select className="select text-sm" value={filters.district || ''} onChange={e => onChange('district', e.target.value || null)}>
+          <option value="">All districts</option>
+          {districts.map(district => <option key={district}>{district}</option>)}
+        </select>
       </div>
     </div>
   )

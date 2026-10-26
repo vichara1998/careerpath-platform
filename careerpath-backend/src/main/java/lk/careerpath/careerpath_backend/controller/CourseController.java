@@ -72,11 +72,24 @@ public class CourseController {
     @GetMapping("/admin/courses")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Page<CourseResponse>>> getAllCourses(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "all") String status,
+            @RequestParam(required = false) CourseType type,
+            @RequestParam(required = false) String district,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
+        if (page < 0 || size < 1 || size > 100)
+            throw new lk.careerpath.careerpath_backend.exception.BadRequestException("Page must be nonnegative and size between 1 and 100");
         return ResponseEntity.ok(ApiResponse.success(
-                courseService.getAllCourses(PageRequest.of(page, size, Sort.by("createdAt").descending())),
+                courseService.getAdminCourses(keyword, status, type, district,
+                        PageRequest.of(page, size, Sort.by("createdAt", "id").descending())),
                 "All courses fetched"));
+    }
+
+    @GetMapping("/admin/courses/summary")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Long>>> getCourseSummary() {
+        return ResponseEntity.ok(ApiResponse.success(courseService.getAdminCourseSummary(), "Course summary fetched"));
     }
 
     @PostMapping("/provider/courses")
