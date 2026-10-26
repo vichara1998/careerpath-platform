@@ -35,13 +35,22 @@ public class RecommendationServiceImpl {
         List<String> careerFields = determineCareerFields(req);
 
         // Fetch relevant courses
-        List<CourseResponse> courses = new ArrayList<>();
-        for (String field : careerFields.stream().limit(3).toList()) {
-            CourseMode mode = req.getPreferredMode() != null ? CourseMode.valueOf(req.getPreferredMode()) : null;
+        Map<Long, CourseResponse> courses = new LinkedHashMap<>();
+        CourseMode mode = req.getPreferredMode() != null && !req.getPreferredMode().isBlank()
+                ? CourseMode.valueOf(req.getPreferredMode()) : null;
+        String district = req.getDistrict() == null || req.getDistrict().isBlank() ? null : req.getDistrict().trim();
+        for (String field : careerFields) {
             courseRepository.searchCourses(null, null, mode,
-                    req.getDistrict(), null, null, field,
+                    district, null, null, field,
                     PageRequest.of(0, 5))
-                    .forEach(c -> courses.add(toSimpleResponse(c)));
+                    .forEach(c -> courses.putIfAbsent(c.getId(), toSimpleResponse(c)));
+        }
+
+        boolean catalogueFallback = courses.isEmpty();
+        if (catalogueFallback) {
+            courseRepository.findByApprovedTrue(PageRequest.of(0, 6,
+                    org.springframework.data.domain.Sort.by("createdAt").descending()))
+                    .forEach(c -> courses.putIfAbsent(c.getId(), toSimpleResponse(c)));
         }
 
         // Get AI-generated pathway summary
@@ -58,7 +67,8 @@ public class RecommendationServiceImpl {
         return Map.of(
                 "careerFields", careerFields,
                 "pathwaySummary", aiSummary,
-                "recommendedCourses", courses);
+                "courseMatchType", catalogueFallback ? "catalogue" : "profile",
+                "recommendedCourses", courses.values().stream().limit(12).toList());
     }
 
     private List<String> determineCareerFields(RecommendationRequest req) {
@@ -107,6 +117,8 @@ public class RecommendationServiceImpl {
         return CourseResponse.builder()
                 .id(c.getId()).title(c.getTitle()).type(c.getType()).level(c.getLevel())
                 .mode(c.getMode()).totalFee(c.getTotalFee()).district(c.getDistrict())
+                .thumbnailUrl(c.getThumbnailUrl()).durationMonths(c.getDurationMonths())
+                .careerFields(c.getCareerFields()).reviewCount(c.getReviewCount())
                 .universityName(c.getUniversity().getName())
                 .averageRating(c.getAverageRating()).build();
     }

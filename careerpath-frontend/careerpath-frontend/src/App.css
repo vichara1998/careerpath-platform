@@ -217,6 +217,17 @@ main::before {
 .result-panel { min-height: 430px; }
 .field-tags { display: flex; flex-wrap: wrap; gap: 7px; margin: 20px 0; }
 .field-tags span { padding: 7px 10px; border-radius: 2px; color: var(--teal-dark); background: #dcece6; font-size: .76rem; font-weight: 700; }
+.dark .field-tags span { color: #e3f6ef; background: #23574c; border: 1px solid #568c7e; }
+.result-panel { scroll-margin-top: 100px; }
+.result-panel:focus-visible { outline: 2px solid var(--teal); outline-offset: 4px; }
+.pathway-guidance { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 16px; }
+.pathway-guidance summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.pathway-courses { margin: 32px 0; scroll-margin-top: 100px; }
+.pathway-courses:focus-visible { outline: 2px solid var(--teal); outline-offset: 5px; }
+.pathway-courses .section-heading > a { display: inline-flex; align-items: center; gap: 6px; }
+.pathway-courses { margin: 32px 0; scroll-margin-top: 100px; }
+.pathway-courses:focus-visible { outline: 2px solid var(--teal); outline-offset: 5px; }
+.pathway-courses .section-heading > a { display: inline-flex; align-items: center; gap: 6px; }
 .pathway-summary { color: var(--muted); line-height: 1.75; }
 .recommend-course-list { display: grid; gap: 8px; }
 .recommend-course-list a { display: grid; gap: 3px; border-left: 2px solid var(--yellow); padding: 11px 13px; color: var(--ink); background: #faf8f0; text-decoration: none; }

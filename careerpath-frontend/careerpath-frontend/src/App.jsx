@@ -1,5 +1,5 @@
 import AdminDesk from "./components/admin/AdminDesk.jsx";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -490,6 +490,7 @@ const recommendationPayload = (form) => ({
 
 function Recommendation() {
   const location = useLocation();
+  const resultsPanel = useRef(null);
   const [form, setForm] = useState({
     qualificationLevel: "",
     stream: "",
@@ -510,10 +511,17 @@ function Recommendation() {
   const [chatError, setChatError] = useState("");
 
   useEffect(() => {
+    if (!result || loading) return;
+    resultsPanel.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    resultsPanel.current?.focus({ preventScroll: true });
+  }, [result, loading]);
+
+  useEffect(() => {
     if (!location.state?.profile) return;
     const controller = new AbortController();
     setLoading(true);
     setError("");
+    setResult(null);
     recommendApi.getRecommendations(recommendationPayload(location.state.profile), { signal: controller.signal })
       .then(({ data }) => {
         if (!controller.signal.aborted) setResult(data.data);
@@ -529,8 +537,10 @@ function Recommendation() {
 
   const submitProfile = async (event) => {
     event.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError("");
+    setResult(null);
     const payload = recommendationPayload(form);
     try {
       const { data } = await recommendApi.getRecommendations(payload);
@@ -631,8 +641,8 @@ function Recommendation() {
             <ArrowRight size={17} />
           </button>
         </form>
-        <section className="result-panel" aria-live="polite">
-          {result ? (
+        <section className="result-panel" aria-label="Your pathway guidance" aria-live="polite" aria-busy={loading}>
+          {loading ? <div className="result-empty" role="status"><Sparkles size={24} /><h2>Building your pathway...</h2><p>Finding courses that match your profile and study preferences.</p></div> : result ? (
             <>
               <p className="eyebrow">YOUR PATHWAY</p>
               <h2>A direction to explore</h2>
@@ -641,29 +651,7 @@ function Recommendation() {
                   <span key={field}>{field}</span>
                 ))}
               </div>
-              <p className="pathway-summary">{result.pathwaySummary}</p>
-              <h3>Relevant courses</h3>
-              {result.recommendedCourses?.length ? (
-                <div className="recommend-course-list">
-                  {result.recommendedCourses.map((course, index) => (
-                    <Link
-                      key={`${course.id}-${index}`}
-                      to={`/courses/${course.id}`}
-                    >
-                      <strong>{course.title}</strong>
-                      <span>
-                        {course.universityName} · {course.mode}
-                      </span>
-                      <span>{money(course.totalFee)}</span>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <p className="detail-muted">
-                  No matching courses found yet. Browse the course directory for
-                  more options.
-                </p>
-              )}
+              {result.pathwaySummary && <details className="pathway-guidance"><summary>Read your pathway guidance</summary><p className="pathway-summary">{result.pathwaySummary}</p></details>}
             </>
           ) : (
             <div className="result-empty">
@@ -679,6 +667,17 @@ function Recommendation() {
           )}
         </section>
       </div>
+      {(loading || result) && <section className="pathway-courses" ref={resultsPanel} tabIndex={-1} aria-label="Recommended course list" aria-live="polite" aria-busy={loading}>
+        <div className="section-heading">
+          <div><p className="eyebrow">EXPLORE YOUR OPTIONS</p><h2>{result?.courseMatchType === "catalogue" ? "Other courses to explore" : "Recommended courses"}</h2></div>
+          <Link className="text-link" to="/courses">View all courses <ArrowRight size={16} /></Link>
+        </div>
+        {loading ? <p className="notice" role="status">Finding courses for your pathway...</p> : <>
+          {result.courseMatchType === "catalogue" && <p className="detail-muted">No exact matches were found for your profile and preferences. These are other published courses you can explore.</p>}
+          {result.recommendedCourses?.length ? <div className="course-grid">{result.recommendedCourses.map((course) => <CourseCard key={course.id} course={course} />)}</div>
+            : <p className="notice">No published courses are available yet. Please check back soon.</p>}
+        </>}
+      </section>}
       <section className="chat-panel">
         <div>
           <p className="eyebrow">CAREER ASSISTANT</p>
