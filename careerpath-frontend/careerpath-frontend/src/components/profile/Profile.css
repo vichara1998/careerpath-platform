@@ -1,0 +1,11 @@
+.page-intro.profile-intro { max-width: none; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+.profile-intro-copy { min-width: 0; }
+.profile-intro-copy > p:last-child { color: var(--muted); line-height: 1.7; }
+.profile-header-avatar { position: relative; display: grid; place-items: center; width: 112px; height: 112px; flex-shrink: 0; border: 3px solid var(--teal); border-radius: 50%; background: var(--surface); box-shadow: 0 0 0 8px color-mix(in srgb, var(--teal) 10%, transparent); }
+.profile-header-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.profile-header-initials { font-size: 2rem; font-weight: 600; color: var(--teal); }
+@media (max-width: 600px) {
+  .profile-intro { gap: 16px; }
+  .profile-header-avatar { width: 72px; height: 72px; box-shadow: 0 0 0 5px color-mix(in srgb, var(--teal) 10%, transparent); }
+  .profile-header-initials { font-size: 1.4rem; }
+}

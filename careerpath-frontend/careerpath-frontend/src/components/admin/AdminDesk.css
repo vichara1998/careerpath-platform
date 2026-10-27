@@ -9,9 +9,6 @@
 .management-stat:hover, .management-stat.is-active { border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal); }
 .management-stat > span:first-child { font-size: .82rem; color: var(--muted); }
 .management-stat strong { font-size: 2rem; line-height: 1; font-variant-numeric: tabular-nums; }
-.management-stat-dot { position: absolute; top: 24px; right: 20px; width: 8px; height: 8px; border-radius: 50%; background: var(--teal); }
-.management-stat-dot.pending { background: #d49a28; }
-.management-stat-dot.rejected { background: #cf6656; }
 .management-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
 .management-tabs button { padding: 12px 2px; color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; font-size: .9rem; font-weight: 600; }
 .management-tabs button.is-active { color: var(--teal); border-bottom-color: var(--teal); }
@@ -37,7 +34,6 @@
 .management-course-cell > div > span { display: block; color: var(--muted); margin-top: 4px; line-height: 1.45; font-size: .76rem; }
 .management-fee { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .management-status { display: inline-flex; align-items: center; gap: 6px; border-radius: 30px; padding: 5px 9px; text-transform: capitalize; font-size: .7rem; font-weight: 600; white-space: nowrap; }
-.management-status::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .management-status.published { color: #206653; background: #e4f3eb; }
 .management-status.pending { color: #835b12; background: #fcf1d8; }
 .management-status.rejected { color: #a23e31; background: #fbe8e4; }
@@ -67,3 +63,37 @@
 .dark .management-delete { color: #eea89c; }
 @media (max-width: 900px) { .management-header { align-items: flex-start; flex-direction: column; } .management-toolbar select { flex: 1; max-width: none; } .management-toolbar .management-search { flex-basis: 100%; } }
 @media (max-width: 560px) { .management-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .management-stat { padding: 16px; } .management-stat-dot { top: 20px; right: 16px; } .management-header-actions { width: 100%; } .management-header-actions button { flex: 1; } .management-toolbar { padding: 12px; } .management-toolbar select { min-width: 120px; } .management-pagination { gap: 12px; } .management-pagination > span { width: 100%; } .management-pagination > div { margin-left: auto; } }
+
+/* Illustrated course counters, with the live totals and filter actions preserved. */
+.management-stat { --stat-accent: 63, 172, 145; min-height: 112px; overflow: hidden; isolation: isolate; gap: 14px; border-radius: 14px; padding: 21px 20px; transition: border-color .18s, box-shadow .18s, transform .18s; }
+.management-stat--all { background: linear-gradient(115deg, #f3fbf7, #dcefe8); }
+.management-stat--pending { --stat-accent: 191, 139, 58; background: linear-gradient(115deg, #fffaf1, #f2e7cd); }
+.management-stat--published { --stat-accent: 66, 146, 195; background: linear-gradient(115deg, #f4faff, #dceef9); }
+.management-stat--rejected { --stat-accent: 202, 96, 83; background: linear-gradient(115deg, #fff7f5, #f5dfdb); }
+.management-stat::before, .management-stat::after { content: ""; position: absolute; z-index: -1; pointer-events: none; }
+.management-stat::before { width: 160px; height: 170px; right: -50px; bottom: -106px; border-radius: 45% 55% 0 0; background: rgba(var(--stat-accent), .16); transform: rotate(32deg); }
+.management-stat::after { width: 105px; height: 140px; right: -13px; top: -17px; border-radius: 58% 0 44% 50%; background: rgba(var(--stat-accent), .08); transform: rotate(25deg); }
+.management-stat .management-stat-label { position: relative; z-index: 2; max-width: calc(100% - 84px); color: #42534d; font-size: .82rem; line-height: 1.4; }
+.management-stat > strong { position: relative; z-index: 2; max-width: calc(100% - 84px); font-size: 2.25rem; font-weight: 650; letter-spacing: -.035em; }
+.management-stat-art { position: absolute; right: 7px; bottom: 0; width: 110px; height: 110px; pointer-events: none; z-index: 1; }
+.management-stat:hover { transform: translateY(-2px); }
+.management-stat:hover, .management-stat.is-active { border-color: rgb(var(--stat-accent)); box-shadow: 0 0 0 1px rgba(var(--stat-accent), .55), 0 8px 24px rgba(var(--stat-accent), .08); }
+.management-stat:focus-visible { outline: 2px solid rgb(var(--stat-accent)); outline-offset: 4px; }
+.dark .management-stat { color: #f2f6f3; border-color: rgba(var(--stat-accent), .3); }
+.dark .management-stat--all { --stat-accent: 111, 219, 190; background: linear-gradient(115deg, #142c29, #104639); }
+.dark .management-stat--pending { --stat-accent: 205, 154, 66; background: linear-gradient(115deg, #242b26, #3b3825); }
+.dark .management-stat--published { --stat-accent: 69, 168, 212; background: linear-gradient(115deg, #182e32, #153f4b); }
+.dark .management-stat--rejected { --stat-accent: 214, 101, 90; background: linear-gradient(115deg, #2a2b29, #45302f); }
+.dark .management-stat .management-stat-label { color: #e1e9e4; }
+.dark .management-stat:hover, .dark .management-stat.is-active { border-color: rgb(var(--stat-accent)); box-shadow: 0 0 0 1px rgba(var(--stat-accent), .6), 0 0 20px rgba(var(--stat-accent), .08); }
+@media (min-width: 561px) and (max-width: 1000px) { .management-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .management-stat { min-height: 108px; padding: 17px 13px; gap: 16px; } .management-stat-art { width: 86px; height: 86px; right: -3px; bottom: 0; } .management-stat .management-stat-label, .management-stat > strong { max-width: calc(100% - 52px); } .management-stat .management-stat-label { font-size: .73rem; } .management-stat > strong { font-size: 1.9rem; } }
+@media (prefers-reduced-motion: reduce) { .management-stat { transition: none; } .management-stat:hover { transform: none; } }
+
+/* Drag the delete handle right; the course row stays in place. */
+.management-swipe-hint { margin: 0; padding: 11px 18px; border-bottom: 1px solid var(--line); font-size: .73rem; line-height: 1.6; color: var(--muted); }
+.management-delete-track { display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; width: 138px; flex-shrink: 0; border-radius: 8px; background: #bd493b18; color: #bd493b; padding-right: 10px; }
+.management-row-actions .management-drag-delete { display: flex; align-items: center; gap: 5px; color: #fff; background: #bd493b; border-color: #bd493b; cursor: grab; touch-action: none; user-select: none; transition: background .15s; }
+.management-row-actions .management-drag-delete:active { cursor: grabbing; background: #a6382d; }
+.management-row-actions .management-drag-delete:hover { background: #a6382d; color: white; border-color: #a6382d; }
+.management-row-actions .management-drag-delete:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
