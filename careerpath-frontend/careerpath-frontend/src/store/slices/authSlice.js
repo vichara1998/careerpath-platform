@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../api/axios.js";
+import { clearPathwayState } from "../../utils/pathwayState.js";
 import { readSession } from "../../utils/session.js";
 
 export const login = createAsyncThunk(
@@ -39,6 +40,7 @@ const authSlice = createSlice({
   },
   reducers: {
     logout: (state) => {
+      clearPathwayState();
       state.user = null;
       state.token = null;
       localStorage.removeItem("cp_user");
