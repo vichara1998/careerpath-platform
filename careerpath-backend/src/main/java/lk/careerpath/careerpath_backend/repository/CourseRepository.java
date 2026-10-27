@@ -17,6 +17,10 @@ import java.util.List;
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "university")
+    @Query("SELECT c FROM Course c WHERE c.approved = true AND (c.rejected = false OR c.rejected IS NULL)")
+    List<Course> findRecommendationCandidates();
+
     Page<Course> findByApprovedTrue(Pageable pageable);
 
     Page<Course> findByCreatedByUserId(Long userId, Pageable pageable);

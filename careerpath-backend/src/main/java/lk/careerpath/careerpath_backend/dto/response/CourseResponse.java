@@ -11,6 +11,10 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class CourseResponse {
+    private Integer matchScore;
+    private java.util.List<String> matchReasons;
+    private java.util.List<String> matchWarnings;
+    private String eligibilityStatus;
     private Long id;
     private String title;
     private String description;

@@ -24,7 +24,7 @@ public class RecommendationController {
     @PostMapping
     @Operation(summary = "Get personalized career pathway recommendations")
     public ResponseEntity<ApiResponse<Map<String, Object>>> recommend(
-            @RequestBody RecommendationRequest req,
+            @jakarta.validation.Valid @RequestBody RecommendationRequest req,
             @AuthenticationPrincipal UserDetailsImpl user) {
         return ResponseEntity.ok(ApiResponse.success(
                 recommendationService.getRecommendations(user.getId(), req), "Recommendations generated"));
