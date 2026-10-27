@@ -1,6 +1,7 @@
 import ProfileChoices, { districts, interestChoices } from "../profile/ProfileChoices.jsx";
 import { useEffect, useRef, useState } from "react";
 import { Save, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import CourseImageField from "./CourseImageField.jsx";
 
 const courseTypes = [
@@ -89,8 +90,8 @@ export default function CourseEditModal({
     }
   };
 
-  return (
-    <div className="dialog-backdrop" role="presentation" onMouseDown={() => !saving && onClose()}>
+  return createPortal(
+    <div className="dialog-backdrop course-editor-backdrop" role="presentation" onMouseDown={() => !saving && onClose()}>
       <form
         ref={dialog}
         className="confirm-dialog course-edit-dialog"
@@ -125,6 +126,7 @@ export default function CourseEditModal({
             <X size={18} />
           </button>
         </div>
+        <div className="course-edit-body">
         {providerEdit && (
           <p className="course-edit-review-note">
             Saving sends this course back for admin approval before it is
@@ -279,6 +281,8 @@ export default function CourseEditModal({
             />
           </label>
         </div>
+        </div>
+        <div className="course-edit-footer">
         {error && (
           <p className="notice notice-error" role="alert">
             {error}
@@ -297,7 +301,9 @@ export default function CourseEditModal({
                 : isNew ? "Create for review" : "Save changes"}
           </button>
         </div>
+        </div>
       </form>
-    </div>
+    </div>,
+    document.body,
   );
 }

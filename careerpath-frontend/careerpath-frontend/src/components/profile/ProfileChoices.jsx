@@ -15,16 +15,16 @@ export const interestChoices = ["Software Engineering", "Data Science", "Enginee
 export const skillChoices = ["Problem solving", "Communication", "Teamwork", "Leadership", "Programming", "Mathematics", "Creativity", "Writing", "Languages", "Practical / technical skills"];
 export const goalChoices = ["Earn a degree", "Find my first job", "Start a business", "Change careers", "Improve my skills", "Study abroad", "Gain a professional qualification", "Explore my options"];
 
-export default function ProfileChoices({ name, label, options, initialValue = "", onChange }) {
+export default function ProfileChoices({ name, label, options, initialValue = "", onChange, disabled = false, hint = "Tick any that apply, or add your own." }) {
   const initial = initialValue.split(",").map((item) => item.trim()).filter(Boolean);
   const [selected, setSelected] = useState(() => initial.filter((item) => options.includes(item)));
   const [additional, setAdditional] = useState(() => initial.filter((item) => !options.includes(item)).join(", "));
   const notify = (choices, extra) => onChange?.([...new Set([...choices, ...extra.split(",").map((item) => item.trim()).filter(Boolean)])].join(", "));
   const combined = [...new Set([...selected, ...additional.split(",").map((item) => item.trim()).filter(Boolean)])];
   return (
-    <fieldset className="profile-choice-field">
+    <fieldset className="profile-choice-field" disabled={disabled}>
       <legend>{label}</legend>
-      <p className="profile-choice-hint">Tick any that apply, or add your own.</p>
+      <p className="profile-choice-hint">{hint}</p>
       <div className="profile-choice-grid">
         {options.map((option) => (
           <label className="profile-choice" key={option}>

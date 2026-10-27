@@ -1,5 +1,6 @@
+import AdminStatArt from "./AdminStatArt.jsx";
 import { useEffect, useRef, useState } from "react";
-import { BookOpen, Check, ChevronLeft, ChevronRight, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
+import { BookOpen, Check, CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
 import { adminApi } from "../../api/adminApi.js";
 import { courseApi } from "../../api/courseApi.js";
 import { useAuth } from "../../hooks/useAuth.js";
@@ -66,6 +67,31 @@ export default function AdminDesk() {
   const [confirmation, setConfirmation] = useState(null);
   const [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deleteDrag, setDeleteDrag] = useState(null);
+  const deleteGesture = useRef(null);
+  const cancelDeleteDrag = () => { deleteGesture.current = null; setDeleteDrag(null); };
+
+  useEffect(() => { cancelDeleteDrag(); }, [draft, filters, page, size, refresh, tab]);
+
+  const startDeleteDrag = (event, course) => {
+    if (busy || loading || (event.button != null && event.button !== 0)) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    deleteGesture.current = { course, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+    setDeleteDrag({ id: course.id, distance: 0 });
+  };
+  const moveDeleteDrag = (event) => {
+    const gesture = deleteGesture.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const distance = event.clientX - gesture.x;
+    if (Math.abs(event.clientY - gesture.y) > 32) { cancelDeleteDrag(); return; }
+    setDeleteDrag({ id: gesture.course.id, distance: Math.max(0, Math.min(56, distance)) });
+  };
+  const finishDeleteDrag = (event) => {
+    const gesture = deleteGesture.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    cancelDeleteDrag();
+    if (event.clientX - gesture.x >= 48 && Math.abs(event.clientY - gesture.y) <= 32) askDeleteCourse(gesture.course);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -120,10 +146,14 @@ export default function AdminDesk() {
     finally { setBusy(false); }
   };
   const ask = (action) => { setActionError(""); setConfirmation(action); };
+  const askDeleteCourse = (course) => ask({
+    title: "Delete this course?", message: '"' + course.title + '" will be permanently removed. This cannot be undone.',
+    label: "Delete course", success: "Course deleted.", run: () => adminApi.deleteCourse(course.id),
+  });
   const runAction = async () => {
     if (busy) return;
     setBusy(true); setActionError("");
-    try { await confirmation.run(); setNotice(confirmation.success); setConfirmation(null); reload(); }
+    try { await confirmation.run(); setNotice(confirmation.success); setConfirmation(null); cancelDeleteDrag(); reload(); }
     catch (failure) { setActionError(errorMessage(failure)); }
     finally { setBusy(false); }
   };
@@ -142,9 +172,9 @@ export default function AdminDesk() {
     </header>
     <div className="management-stats" aria-label="Course overview">
       {[["all", "All courses", "total"], ["pending", "Needs review", "pending"], ["published", "Published", "published"], ["rejected", "Rejected", "rejected"]].map(([status, label, key]) =>
-        <button key={key} className={`management-stat ${tab === "courses" && filters.status === status ? "is-active" : ""}`}
+        <button key={key} className={`management-stat management-stat--${status} ${tab === "courses" && filters.status === status ? "is-active" : ""}`}
           onClick={() => { setTab("courses"); updateFilter("status", status); }} aria-pressed={tab === "courses" && filters.status === status}>
-          <span>{label}</span><strong>{summaryError ? "—" : summary?.[key] ?? "…"}</strong><span className={`management-stat-dot ${status}`} />
+          <span className="management-stat-label">{label}</span><strong>{summaryError ? "—" : summary?.[key] ?? "…"}</strong><AdminStatArt type={status} />
         </button>)}
     </div>
     {summaryError && <p className="notice notice-error" role="alert">Summary unavailable. {summaryError}</p>}
@@ -161,20 +191,38 @@ export default function AdminDesk() {
         <select aria-label="Filter course district" value={filters.district} onChange={(event) => updateFilter("district", event.target.value)}><option value="">All districts</option>{districts.map((district) => <option key={district}>{district}</option>)}</select>
         <button className="text-link" onClick={clearFilters}>Clear filters</button>
       </div>
+      <p className="management-swipe-hint">Hold the Delete button and drag it right to request deletion. Keyboard: focus Delete and press Enter or Space.</p>
       {error && <div className="notice notice-error" role="alert">{error} <button className="text-link" onClick={reload}>Retry</button></div>}
-      <div className="management-table-scroll" aria-busy={loading || pendingSearch}>
+      <div className="management-table-scroll" aria-busy={loading || pendingSearch} onKeyDown={(event) => { if (event.key === "Escape") cancelDeleteDrag(); }}>
         <table className="management-table"><thead><tr><th scope="col">Course / institution</th><th scope="col">Location / mode</th><th scope="col">Total fee</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
           <tbody>{loading || pendingSearch ? <tr><td colSpan={5} className="management-empty" role="status">Loading courses...</td></tr> : error ? <tr><td colSpan={5} className="management-empty">Courses could not be loaded. Retry above.</td></tr> : !courses.content.length ? <tr><td colSpan={5} className="management-empty"><BookOpen size={24} /><strong>No matching courses</strong><span>Try another search or clear your filters.</span><button className="button-outline" onClick={clearFilters}>Clear filters</button></td></tr> : courses.content.map((course) =>
             <tr key={course.id}>
               <td><div className="management-course-cell">{course.thumbnailUrl ? <img src={course.thumbnailUrl} alt="" loading="lazy" /> : <span className="management-thumbnail"><BookOpen size={20} /></span>}<div><button className="management-course-title" onClick={() => setEditor(course)}>{course.title}</button><span>{course.universityName}</span><small>#{course.id} · {formatLabel(course.type)}</small></div></div></td>
               <td><span>{course.district || "Not listed"}</span><small>{formatLabel(course.mode)}</small></td>
               <td className="management-fee">{fee(course.totalFee)}</td>
-              <td><span className={`management-status ${statusOf(course)}`}>{statusOf(course) === "pending" ? "Needs review" : statusOf(course)}</span></td>
+              <td><span className={`management-status ${statusOf(course)}`}>{course.rejected ? <XCircle size={13} aria-hidden="true" /> : course.approved ? <CheckCircle size={13} aria-hidden="true" /> : <Clock size={13} aria-hidden="true" />}{statusOf(course) === "pending" ? "Needs review" : statusOf(course)}</span></td>
               <td><div className="management-row-actions">
                 <button className="management-edit" disabled={busy} onClick={() => setEditor(course)} aria-label={`Edit ${course.title}`}><Pencil size={14} />Edit</button>
                 {!course.approved && <button disabled={busy} onClick={() => approve(course)} aria-label={`Publish ${course.title}`} title="Publish course"><Check size={16} /><span className="sr-only">Publish</span></button>}
-                {!course.rejected && <button disabled={busy} onClick={() => ask({ title: "Reject this course?", message: `“${course.title}” will be hidden from the public catalogue. You can publish it again later.`, label: "Reject course", success: `Rejected “${course.title}”.`, run: () => adminApi.rejectCourse(course.id) })} aria-label={`Reject ${course.title}`} title="Reject course"><X size={16} /><span className="sr-only">Reject</span></button>}
-                <button className="management-delete" disabled={busy} onClick={() => ask({ title: "Delete this course?", message: `“${course.title}” will be permanently removed. This cannot be undone.`, label: "Delete course", success: "Course deleted.", run: () => adminApi.deleteCourse(course.id) })} aria-label={`Delete ${course.title}`} title="Delete course"><Trash2 size={15} /><span className="sr-only">Delete</span></button>
+                {!course.rejected && <button disabled={busy} onClick={() => ask({ title: "Reject this course?", message: `“${course.title}” will be hidden from the public catalogue. You can publish it again later.`, label: "Reject course", success: `Rejected “${course.title}”.`, run: () => adminApi.rejectCourse(course.id) })} aria-label={`Reject ${course.title}`} title="Hide this course from the public catalogue"><XCircle size={16} aria-hidden="true" /><span>Reject</span></button>}
+                <div className="management-delete-track">
+                  <ChevronRight size={16} aria-hidden="true" />
+                  <button className="management-drag-delete" disabled={busy}
+                    style={{ transform: `translateX(${deleteDrag?.id === course.id ? deleteDrag.distance : 0}px)` }}
+                    onPointerDown={(event) => startDeleteDrag(event, course)}
+                    onPointerMove={moveDeleteDrag} onPointerUp={finishDeleteDrag}
+                    onPointerCancel={cancelDeleteDrag} onLostPointerCapture={cancelDeleteDrag}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        if (!event.repeat && !busy) { cancelDeleteDrag(); askDeleteCourse(course); }
+                      }
+                    }}
+                    onClick={(event) => { if (event.detail === 0 && !busy) askDeleteCourse(course); }}
+                    aria-label={"Delete " + course.title} title="Hold and drag right to delete">
+                    <Trash2 size={15} /><span>Delete</span>
+                  </button>
+                </div>
               </div></td>
             </tr>)}
           </tbody></table>

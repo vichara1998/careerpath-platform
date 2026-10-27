@@ -1,3 +1,4 @@
+import { readPathwayState, writePathwayState, initialPathwayState, profileSignature } from "./utils/pathwayState.js";
 import AdminDesk from "./components/admin/AdminDesk.jsx";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -22,7 +23,10 @@ import { courseApi } from "./api/courseApi.js";
 import { recommendApi } from "./api/recommendApi.js";
 import { authApi } from "./api/authApi.js";
 
+import PathwayPreview from "./components/profile/PathwayPreview.jsx";
+import QualificationChoices from "./components/profile/QualificationChoices.jsx";
 import Profile from "./components/profile/Profile.jsx";
+import { getStudyStreams, getInterestChoices } from "./components/profile/profileOptions.js";
 import ProfileChoices, { districts, studyStreams, interestChoices, skillChoices, goalChoices } from "./components/profile/ProfileChoices.jsx";
 
 import { login, register } from "./store/slices/authSlice.js";
@@ -49,6 +53,10 @@ const apiError = (error) =>
 
 function Home() {
   const navigate = useNavigate();
+  const [homeForm, setHomeForm] = useState(() => readPathwayState("home").form || {});
+  const qualification = homeForm.qualificationLevel || "";
+  const stream = homeForm.stream || "";
+  useEffect(() => { writePathwayState("home", { form: homeForm }); }, [homeForm]);
   const submitProfile = (event) => {
     event.preventDefault();
     const profile = Object.fromEntries(new FormData(event.currentTarget));
@@ -72,47 +80,40 @@ function Home() {
         </div>
 
         <div className="dashboard-panel">
-          <form className="profile-panel" onSubmit={submitProfile}>
+          <form className="profile-panel" onSubmit={submitProfile} onChange={(event) => {
+            const { name, value } = event.target;
+            if (name && name !== "qualificationLevel") setHomeForm(current => ({ ...current, [name]: value }));
+          }}>
             <h2>Your profile</h2>
 
-            <label className="field-wrap">
-              <span>Highest qualification</span>
-              <div className="select-shell">
-                <select name="qualificationLevel" defaultValue="" required>
-                  <option value="" disabled>
-                    Choose a level
-                  </option>
-                  <option value="OL_FAIL">O/L incomplete</option>
-                  <option value="OL_PASS">O/L passed</option>
-                  <option value="AL_FAIL">A/L incomplete</option>
-                  <option value="AL_PASS">A/L passed</option>
-                  <option value="DIPLOMA">Diploma</option>
-                  <option value="UNDERGRADUATE">Undergraduate</option>
-                  <option value="GRADUATE">Graduate</option>
-                  <option value="PROFESSIONAL">Professional</option>
-                </select>
-              </div>
-            </label>
+            <QualificationChoices name="qualificationLevel" value={qualification} required
+              onChange={(value) => setHomeForm(current => ({ ...current, qualificationLevel: value, stream: "", interests: "" }))} />
 
+            <div className="row-fields profile-entry-details">
+              <label className="field-wrap"><span>Highest school grade completed (optional)</span><div className="input-shell"><input name="highestSchoolGrade" defaultValue={homeForm.highestSchoolGrade || ""} type="number" min="1" max="13" placeholder="e.g. 9 or 11" /></div></label>
+              <label className="field-wrap"><span>Age (optional)</span><div className="input-shell"><input name="age" defaultValue={homeForm.age || ""} type="number" min="10" max="100" placeholder="For age-based entry rules" /></div></label>
+            </div>
             <label className="field-wrap">
               <span>Study stream</span>
               <div className="select-shell">
-                <select name="stream" defaultValue="">
-                  <option value="">Choose a stream (optional)</option>
-                  {studyStreams.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                <select name="stream" value={stream} disabled={!qualification} onChange={(event) => setHomeForm(current => ({ ...current, stream: event.target.value, interests: "" }))}>
+                  <option value="">Choose a stream</option>
+                  {getStudyStreams(qualification, studyStreams).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </div>
             </label>
 
-            <ProfileChoices name="interests" label="Interests" options={interestChoices} />
-            <ProfileChoices name="skills" label="Skills" options={skillChoices} />
-            <ProfileChoices name="careerGoal" label="Career goals" options={goalChoices} />
+            <ProfileChoices key={qualification + ":" + stream} name="interests" label="Interests"
+              disabled={!stream} hint={stream ? "Suggested for your stream. Tick any that apply, or add your own field." : "Choose your qualification and study stream to see suggested interests."}
+              options={getInterestChoices(qualification, stream, studyStreams, interestChoices)} initialValue={homeForm.interests || ""} onChange={(value) => setHomeForm(current => ({ ...current, interests: value }))} />
+            <ProfileChoices name="skills" label="Skills" options={skillChoices} initialValue={homeForm.skills || ""} onChange={(value) => setHomeForm(current => ({ ...current, skills: value }))} />
+            <ProfileChoices name="careerGoal" label="Career goals" options={goalChoices} initialValue={homeForm.careerGoal || ""} onChange={(value) => setHomeForm(current => ({ ...current, careerGoal: value }))} />
 
             <div className="row-fields">
               <label className="field-wrap field-half">
                 <span>Study mode</span>
                 <div className="select-shell">
-                  <select name="preferredMode" defaultValue="">
+                  <select name="preferredMode" defaultValue={homeForm.preferredMode || ""}>
                     <option value="">
                       Any mode
                     </option>
@@ -126,7 +127,7 @@ function Home() {
               <label className="field-wrap field-half">
                 <span>District</span>
                 <div className="select-shell">
-                  <select name="district" defaultValue="">
+                  <select name="district" defaultValue={homeForm.district || ""}>
                     <option value="">
                       Any district
                     </option>
@@ -482,8 +483,14 @@ function CourseDetails() {
 
 const recommendationPayload = (form) => ({
   ...form,
-  qualificationLevel: form.qualificationLevel || null,
+  qualifications: (form.qualificationLevel || "").split(",").map(value => value.trim()).filter(Boolean),
+  qualificationLevel: ["PROFESSIONAL", "GRADUATE", "UNDERGRADUATE", "DIPLOMA", "AL_PASS", "AL_FAIL", "OL_PASS", "OL_FAIL"]
+    .find(level => (form.qualificationLevel || "").split(",").map(value => value.trim()).includes(level)) || null,
   preferredMode: form.preferredMode || null,
+  age: form.age === "" || form.age == null ? null : Number(form.age),
+  highestSchoolGrade: form.highestSchoolGrade === "" || form.highestSchoolGrade == null ? null : Number(form.highestSchoolGrade),
+  maxBudget: form.maxBudget === "" || form.maxBudget == null ? null : Number(form.maxBudget),
+  maxDurationMonths: form.maxDurationMonths === "" || form.maxDurationMonths == null ? null : Number(form.maxDurationMonths),
   interests: (form.interests || "").split(",").map((value) => value.trim()).filter(Boolean),
   skills: (form.skills || "").split(",").map((value) => value.trim()).filter(Boolean),
 });
@@ -491,7 +498,8 @@ const recommendationPayload = (form) => ({
 function Recommendation() {
   const location = useLocation();
   const resultsPanel = useRef(null);
-  const [form, setForm] = useState({
+  const [savedPathway] = useState(() => initialPathwayState(location.state?.profile));
+  const [form, setForm] = useState(() => ({
     qualificationLevel: "",
     stream: "",
     gpa: "",
@@ -500,9 +508,14 @@ function Recommendation() {
     careerGoal: "",
     preferredMode: "",
     district: "",
-    ...location.state?.profile,
-  });
-  const [result, setResult] = useState(null);
+    age: "",
+    highestSchoolGrade: "",
+    maxBudget: "",
+    maxDurationMonths: "",
+    ...savedPathway.form,
+  }));
+  const [result, setResult] = useState(savedPathway.result || null);
+  const resultProfileKey = useRef(savedPathway.result ? profileSignature(form) : "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -511,20 +524,29 @@ function Recommendation() {
   const [chatError, setChatError] = useState("");
 
   useEffect(() => {
+    const matchesProfile = profileSignature(form) === resultProfileKey.current;
+    writePathwayState("guide", { form, result: matchesProfile ? result : null, sourceKey: savedPathway.sourceKey });
+    if (result && !matchesProfile) setResult(null);
+  }, [form, result, savedPathway.sourceKey]);
+
+  useEffect(() => {
     if (!result || loading) return;
     resultsPanel.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     resultsPanel.current?.focus({ preventScroll: true });
   }, [result, loading]);
 
   useEffect(() => {
-    if (!location.state?.profile) return;
+    if (!location.state?.profile || !savedPathway.needsRequest) return;
     const controller = new AbortController();
     setLoading(true);
     setError("");
     setResult(null);
     recommendApi.getRecommendations(recommendationPayload(location.state.profile), { signal: controller.signal })
       .then(({ data }) => {
-        if (!controller.signal.aborted) setResult(data.data);
+        if (!controller.signal.aborted) {
+          resultProfileKey.current = profileSignature(form);
+          setResult(data.data);
+        }
       })
       .catch((requestError) => {
         if (!controller.signal.aborted) setError(apiError(requestError));
@@ -544,6 +566,7 @@ function Recommendation() {
     const payload = recommendationPayload(form);
     try {
       const { data } = await recommendApi.getRecommendations(payload);
+      resultProfileKey.current = profileSignature(form);
       setResult(data.data);
     } catch (requestError) {
       setError(apiError(requestError));
@@ -588,34 +611,14 @@ function Recommendation() {
       <div className="recommendation-layout">
         <form className="form-panel" onSubmit={submitProfile}>
           <h2>Your profile</h2>
-          <label className="field-label">
-            Highest qualification
-            <select
-              required
-              value={form.qualificationLevel}
-              onChange={(event) =>
-                setForm({ ...form, qualificationLevel: event.target.value })
-              }
-            >
-              <option value="">Choose a level</option>
-              {[
-                "OL_FAIL",
-                "OL_PASS",
-                "AL_FAIL",
-                "AL_PASS",
-                "DIPLOMA",
-                "UNDERGRADUATE",
-                "GRADUATE",
-                "PROFESSIONAL",
-              ].map((level) => (
-                <option key={level} value={level}>
-                  {level.replaceAll("_", " ")}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field-label">Study stream<select value={form.stream} onChange={(event) => setForm({ ...form, stream: event.target.value })}><option value="">Choose a stream (optional)</option>{studyStreams.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-          <ProfileChoices name="interests" label="Interests" options={interestChoices} initialValue={form.interests} onChange={(value) => setForm((current) => ({ ...current, interests: value }))} />
+          <QualificationChoices name="qualificationLevel" value={form.qualificationLevel} required disabled={loading}
+            onChange={(value) => { setForm({ ...form, qualificationLevel: value, stream: "", interests: "" }); setResult(null); }} />
+          <div className="form-two">
+            <label className="field-label">Highest school grade completed (optional)<input type="number" min="1" max="13" value={form.highestSchoolGrade} onChange={(event) => { setForm({ ...form, highestSchoolGrade: event.target.value }); setResult(null); }} /></label>
+            <label className="field-label">Age (optional)<input type="number" min="10" max="100" value={form.age} onChange={(event) => { setForm({ ...form, age: event.target.value }); setResult(null); }} /></label>
+          </div>
+          <label className="field-label">Study stream<select value={form.stream} disabled={loading || !form.qualificationLevel} onChange={(event) => { setForm({ ...form, stream: event.target.value, interests: "" }); setResult(null); }}><option value="">Choose a stream</option>{getStudyStreams(form.qualificationLevel, studyStreams).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+          <ProfileChoices key={form.qualificationLevel + ":" + form.stream} name="interests" label="Interests" disabled={loading || !form.stream} hint={form.stream ? "Suggested for your stream. Tick any that apply, or add your own field." : "Choose your qualification and study stream to see suggested interests."} options={getInterestChoices(form.qualificationLevel, form.stream, studyStreams, interestChoices)} initialValue={form.interests} onChange={(value) => { setForm((current) => ({ ...current, interests: value })); setResult(null); }} />
           <ProfileChoices name="skills" label="Skills" options={skillChoices} initialValue={form.skills} onChange={(value) => setForm((current) => ({ ...current, skills: value }))} />
           <ProfileChoices name="careerGoal" label="Career goals" options={goalChoices} initialValue={form.careerGoal} onChange={(value) => setForm((current) => ({ ...current, careerGoal: value }))} />
           <div className="form-two">
@@ -635,13 +638,23 @@ function Recommendation() {
             </label>
             <label className="field-label">District<select value={form.district} onChange={(event) => setForm({ ...form, district: event.target.value })}><option value="">Any district</option>{districts.map((district) => <option key={district}>{district}</option>)}</select></label>
           </div>
+          <div className="form-two">
+            <label className="field-label">Maximum total budget (LKR)
+              <input type="number" min="0" step="1" value={form.maxBudget} placeholder="Any budget"
+                onChange={(event) => setForm({ ...form, maxBudget: event.target.value })} />
+            </label>
+            <label className="field-label">Maximum duration (months)
+              <input type="number" min="1" max="120" step="1" value={form.maxDurationMonths} placeholder="Any duration"
+                onChange={(event) => setForm({ ...form, maxDurationMonths: event.target.value })} />
+            </label>
+          </div>
           {error && <p className="notice notice-error">{error}</p>}
           <button className="button-primary" type="submit" disabled={loading}>
             {loading ? "Finding options..." : "Build my pathway"}
             <ArrowRight size={17} />
           </button>
         </form>
-        <section className="result-panel" aria-label="Your pathway guidance" aria-live="polite" aria-busy={loading}>
+        <section className={`result-panel${!loading && !result ? " result-panel--preview" : ""}`} aria-label="Your pathway guidance" aria-live="polite" aria-busy={loading}>
           {loading ? <div className="result-empty" role="status"><Sparkles size={24} /><h2>Building your pathway...</h2><p>Finding courses that match your profile and study preferences.</p></div> : result ? (
             <>
               <p className="eyebrow">YOUR PATHWAY</p>
@@ -654,29 +667,42 @@ function Recommendation() {
               {result.pathwaySummary && <details className="pathway-guidance"><summary>Read your pathway guidance</summary><p className="pathway-summary">{result.pathwaySummary}</p></details>}
             </>
           ) : (
-            <div className="result-empty">
-              <div className="result-icon">
-                <Sparkles size={21} />
-              </div>
-              <h2>Your pathway starts here.</h2>
-              <p>
-                Complete your profile to see suggested career fields, practical
-                guidance, and matching courses.
-              </p>
-            </div>
+            <PathwayPreview form={form} />
           )}
         </section>
       </div>
       {(loading || result) && <section className="pathway-courses" ref={resultsPanel} tabIndex={-1} aria-label="Recommended course list" aria-live="polite" aria-busy={loading}>
         <div className="section-heading">
-          <div><p className="eyebrow">EXPLORE YOUR OPTIONS</p><h2>{result?.courseMatchType === "catalogue" ? "Other courses to explore" : "Recommended courses"}</h2></div>
+          <div><p className="eyebrow">EXPLORE YOUR OPTIONS</p><h2>Courses in your selected fields</h2></div>
           <Link className="text-link" to="/courses">View all courses <ArrowRight size={16} /></Link>
         </div>
         {loading ? <p className="notice" role="status">Finding courses for your pathway...</p> : <>
-          {result.courseMatchType === "catalogue" && <p className="detail-muted">No exact matches were found for your profile and preferences. These are other published courses you can explore.</p>}
-          {result.recommendedCourses?.length ? <div className="course-grid">{result.recommendedCourses.map((course) => <CourseCard key={course.id} course={course} />)}</div>
-            : <p className="notice">No published courses are available yet. Please check back soon.</p>}
+          <p className="detail-muted">Scores measure profile alignment, not admission eligibility or career success. Unverified entry requirements must be confirmed with the provider.</p>
+          {result.courseMatchType === "catalogue" && <p className="detail-muted">These courses fit your selected fields and education route, but may have additional entry conditions or differ from your study preferences. Review each course?s conditions before choosing.</p>}
+          {result.recommendedCourses?.length ? <div className="course-grid">{result.recommendedCourses.map((course) => <article key={course.id} className="recommendation-course">
+              <CourseCard course={course} />
+              {course.matchScore != null && <div className="recommendation-evidence">
+                <strong>Profile match: {course.matchScore}/100</strong>
+                <p>{course.eligibilityStatus === "MEETS_LISTED_REQUIREMENT" ? "Meets the listed qualification requirement; confirm admission with the provider." : course.eligibilityStatus === "OPEN_ENTRY" ? "The provider lists open entry; confirm any additional requirements before applying." : course.eligibilityStatus === "CONDITIONAL_MATCH" ? "Your education fits the entry route. Confirm the additional provider conditions before applying." : course.eligibilityStatus === "BRIDGING_REQUIRED" ? "Ask the provider about a bridging pathway." : "Entry requirements need provider verification."}</p>
+                {!!course.matchReasons?.length && <ul aria-label="Why this course">{course.matchReasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>}
+                {!!course.matchWarnings?.length && <ul className="recommendation-warnings" aria-label="Preferences to review">{course.matchWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
+                {course.eligibility && <p><strong>Listed entry requirements:</strong> {course.eligibility}</p>}
+              </div>}
+            </article>)}</div>
+            : <p className="notice">{result.emptyMessage || "No courses with confirmed compatible entry requirements were found in your selected fields."}</p>}
         </>}
+      </section>}
+      {result && !loading && <section className="pathway-courses" aria-label="Eligible courses in other fields">
+        <div className="section-heading"><div><p className="eyebrow">OTHER FIELDS</p><h2>Other courses for your qualifications</h2></div></div>
+        <p className="detail-muted">These options are outside your selected fields. Their entry routes fit your education; review any additional conditions, fees and study preferences.</p>
+        {result.alternativeCourses?.length ? <div className="course-grid">{result.alternativeCourses.map(course => <article key={course.id} className="recommendation-course">
+          <CourseCard course={course} />
+          <div className="recommendation-evidence">
+            <strong>{course.eligibilityStatus === "CONDITIONAL_MATCH" ? "Education fits ? additional conditions to confirm" : "Listed qualification requirement matches"}</strong>
+            <p><strong>Entry requirements:</strong> {course.eligibility}</p>
+            {!!course.matchWarnings?.length && <ul aria-label="Alternative course conditions">{course.matchWarnings.map(warning => <li key={warning}>{warning}</li>)}</ul>}
+          </div>
+        </article>)}</div> : <p className="notice">No other courses with a compatible entry route are available now. Courses with unknown or higher entry requirements are excluded.</p>}
       </section>}
       <section className="chat-panel">
         <div>

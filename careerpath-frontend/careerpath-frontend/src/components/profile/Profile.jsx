@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "./Profile.css";
 import { Camera, Loader2, Save, Trash2, UserRound } from "lucide-react";
 import { profileApi } from "../../api/profileApi.js";
 import { useDispatch } from "react-redux";
@@ -11,6 +12,7 @@ const getErrorMessage = (error) =>
 export default function Profile() {
   const dispatch = useDispatch();
   const [profile, setProfile] = useState(null);
+  const [headerImageFailed, setHeaderImageFailed] = useState(false);
   const [form, setForm] = useState({ fullName: "", phone: "" });
   const [picture, setPicture] = useState(null);
   const [preview, setPreview] = useState("");
@@ -54,6 +56,8 @@ export default function Profile() {
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [picture]);
+
+  useEffect(() => { setHeaderImageFailed(false); }, [profile?.profileImageUrl]);
 
   const applyProfile = (account) => {
     setProfile(account);
@@ -140,10 +144,23 @@ export default function Profile() {
 
   return (
     <section className="page-container content-section">
-      <header className="page-intro">
-        <p className="eyebrow">ACCOUNT</p>
-        <h1>Your profile</h1>
-        <p>Manage the details shown on your CareerPath account.</p>
+      <header className="page-intro profile-intro">
+        <div className="profile-intro-copy">
+          <p className="eyebrow">ACCOUNT</p>
+          <h1>Your profile</h1>
+          <p>Manage the details shown on your CareerPath account.</p>
+        </div>
+        {profile && (
+          <div className="profile-header-avatar">
+            {profile.profileImageUrl && !headerImageFailed ? (
+              <img src={profile.profileImageUrl} alt="Your profile picture" onError={() => setHeaderImageFailed(true)} />
+            ) : (
+              <span className="profile-header-initials" aria-label="Profile picture placeholder">
+                {(profile.fullName || profile.email || "?").trim().split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase()}
+              </span>
+            )}
+          </div>
+        )}
       </header>
 
       {error && (
