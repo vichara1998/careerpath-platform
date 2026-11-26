@@ -3,14 +3,35 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+dependency-reduced-pom.xml
+release.properties
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+.mvn/timing.properties
 
 # Local seed data includes demo account credentials.
 /Path.sql
 /uploads/
+*.sql.bak
 
 # Keep machine-specific configuration out of Git.
 application-local.properties
 application-*.local.properties
+.env
+.env.*
+!.env.example
+
+# Logs and crash reports.
+*.log
+hs_err_pid*
+*.pid
+
+# Temporary and backup files.
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
 
 ### STS ###
 .apt_generated
@@ -39,5 +60,12 @@ build/
 
 ### VS Code ###
 .vscode/
+.history/
+.metals/
+.bsp/
 
 /RECOMMENDATIONS.md
+
+# Operating system metadata.
+.DS_Store
+Thumbs.db
